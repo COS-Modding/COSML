@@ -5,6 +5,8 @@ A Chants Of Sennaar mod loader, using [MonoMod](https://github.com/MonoMod/MonoM
 
 If you're a mod developer, there are [examples](https://github.com/COS-Modding/COSML/tree/main/Examples) in the repo.
 
+Feel free to join the [modding discord server](https://discord.com/invite/CKJuZKpSk).
+
 Build
 =======
 
