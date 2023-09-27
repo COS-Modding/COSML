@@ -3,7 +3,7 @@ Chants Of Sennaar Mod Loader (COSML)
 
 A Chants Of Sennaar mod loader, using [MonoMod](https://github.com/MonoMod/MonoMod).
 
-If you're a mod developer, there are [examples](https://github.com/COS-Modding/api/tree/main/Examples) in the repo.
+If you're a mod developer, there are [examples](https://github.com/COS-Modding/COSML/tree/main/Examples) in the repo.
 
 Build
 =======
@@ -22,4 +22,4 @@ Special thanks
 
 License
 =======
-Distributed under the MIT [license](https://github.com/COS-Modding/api/blob/main/LICENSE).
+Distributed under the MIT [license](https://github.com/COS-Modding/COSML/blob/main/LICENSE).
