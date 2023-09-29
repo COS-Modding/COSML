@@ -45,15 +45,6 @@ namespace COSML.Menu
             int modOrder = 1;
             int modPage;
 
-            // DEBUG
-            //var tmp = ModInstancesArr.ToList();
-            //for (int i = 0; i < 34; i++)
-            //{
-            //    tmp.Add(ModInstancesArr[i % ModInstances.Count]);
-            //}
-            //ModInstancesArr = tmp.ToArray();
-            // ENDDEBUG
-
             // Add mod buttons
             foreach (ModInstance modInst in ModInstancesArr)
             {
@@ -100,9 +91,9 @@ namespace COSML.Menu
                     modButtonGo.transform.localPosition = new Vector3(0, MENU_OPTION_MIN_Y - (optionYDelta % (MENU_OPTION_HEIGHT * MENU_OPTION_MAX_PER_PAGE)), 0);
                     buttonsMod.Add(buttonId, modInst);
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    Logging.API.Error($"Error creating menu for {nameof(IModMenu)} {modInst.Name}\n" + e);
+                    Logging.API.Error($"Error creating menu for {nameof(IModMenu)} {modInst.Name}\n" + ex);
                 }
 
                 optionYDelta += MENU_OPTION_HEIGHT;

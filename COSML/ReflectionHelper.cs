@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace COSML
 {
     /// <summary>
-    ///     A class to aid in reflection while caching it.
+    /// A class to aid in reflection while caching it.
     /// </summary>
     public static class ReflectionHelper
     {
@@ -29,7 +29,7 @@ namespace COSML
         private static bool _preloaded;
 
         /// <summary>
-        ///     Caches all fields on a type to frontload cost of reflection
+        /// Caches all fields on a type to frontload cost of reflection
         /// </summary>
         /// <typeparam name="T">The type to cache</typeparam>
         private static void CacheFields<T>()
@@ -107,7 +107,7 @@ namespace COSML
         #region Fields
 
         /// <summary>
-        ///     Gets a field on a type
+        /// Gets a field on a type
         /// </summary>
         /// <param name="t">Type</param>
         /// <param name="field">Field name</param>
@@ -141,7 +141,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Gets delegate getting field on type
+        /// Gets delegate getting field on type
         /// </summary>
         /// <param name="fi">FieldInfo for field.</param>
         /// <returns>Function which gets value of field</returns>
@@ -217,7 +217,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Gets delegate setting field on type
+        /// Gets delegate setting field on type
         /// </summary>
         /// <param name="fi">FieldInfo for field.</param>
         /// <returns>Function which sets field passed as FieldInfo</returns>
@@ -294,7 +294,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Get a field on an object using a string. Cast to TCast before returning and if field doesn't exist return default.
+        /// Get a field on an object using a string. Cast to TCast before returning and if field doesn't exist return default.
         /// </summary>
         /// <param name="obj">Object/Object of type which the field is on</param>
         /// <param name="name">Name of the field</param>
@@ -314,7 +314,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Get a field on an object using a string.
+        /// Get a field on an object using a string.
         /// </summary>
         /// <param name="obj">Object/Object of type which the field is on</param>
         /// <param name="name">Name of the field</param>
@@ -330,7 +330,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Get a static field on an type using a string.
+        /// Get a static field on an type using a string.
         /// </summary>
         /// <param name="name">Name of the field</param>
         /// <typeparam name="TType">Type which static field resides upon</typeparam>
@@ -345,7 +345,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Get a static field on an type using a string. (for static classes)
+        /// Get a static field on an type using a string. (for static classes)
         /// </summary>
         /// <param name="type">Static Type which static field resides upon</param>
         /// <param name="name">Name of the field</param>
@@ -360,7 +360,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Set a field on an object using a string.
+        /// Set a field on an object using a string.
         /// </summary>
         /// <param name="obj">Object/Object of type which the field is on</param>
         /// <param name="name">Name of the field</param>
@@ -381,7 +381,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Set a field on an object using a string.
+        /// Set a field on an object using a string.
         /// </summary>
         /// <param name="obj">Object/Object of type which the field is on</param>
         /// <param name="name">Name of the field</param>
@@ -396,7 +396,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Set a static field on an type using a string.
+        /// Set a static field on an type using a string.
         /// </summary>
         /// <param name="name">Name of the field</param>
         /// <param name="value">Value to set the field to</param>
@@ -410,7 +410,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Set a static field on an type using a string. (for static classes)
+        /// Set a static field on an type using a string. (for static classes)
         /// </summary>
         /// <param name="type">Static Type which static field resides upon</param>
         /// <param name="name">Name of the field</param>
@@ -428,7 +428,7 @@ namespace COSML
         #region Properties
 
         /// <summary>
-        ///     Gets a property on a type
+        /// Gets a property on a type
         /// </summary>
         /// <param name="t">Type</param>
         /// <param name="property">Property name</param>
@@ -462,7 +462,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Get a property on an object using a string.
+        /// Get a property on an object using a string.
         /// </summary>
         /// <param name="obj">Object/Object of type which the property is on</param>
         /// <param name="name">Name of the property</param>
@@ -478,7 +478,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Get a static property on an type using a string.
+        /// Get a static property on an type using a string.
         /// </summary>
         /// <param name="name">Name of the property</param>
         /// <typeparam name="TType">Type which static property resides upon</typeparam>
@@ -493,7 +493,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Get a static property on an type using a string. (for static classes)
+        /// Get a static property on an type using a string. (for static classes)
         /// </summary>
         /// <param name="type">Static Type which static property resides upon</param>
         /// <param name="name">Name of the property</param>
@@ -508,7 +508,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Set a property on an object using a string.
+        /// Set a property on an object using a string.
         /// </summary>
         /// <param name="obj">Object/Object of type which the property is on</param>
         /// <param name="name">Name of the property</param>
@@ -523,7 +523,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Set a static property on an type using a string.
+        /// Set a static property on an type using a string.
         /// </summary>
         /// <param name="name">Name of the property</param>
         /// <param name="value">Value to set the property to</param>
@@ -537,7 +537,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Set a static property on an type using a string. (for static classes)
+        /// Set a static property on an type using a string. (for static classes)
         /// </summary>
         /// <param name="type">Static Type which static property resides upon</param>
         /// <param name="name">Name of the property</param>
@@ -684,7 +684,7 @@ namespace COSML
         #region Methods
 
         /// <summary>
-        ///     Gets a method on a type 
+        /// Gets a method on a type 
         /// </summary>
         /// <param name="t">Type</param>
         /// <param name="method">Method name</param>
@@ -732,7 +732,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Call an instance method with a return type
+        /// Call an instance method with a return type
         /// </summary>
         /// <param name="obj">Object of type which the method is on</param>
         /// <param name="name">Name of the method</param>
@@ -748,7 +748,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Call an instance method without a return type
+        /// Call an instance method without a return type
         /// </summary>
         /// <param name="obj">Object of type which the method is on</param>
         /// <param name="name">Name of the method</param>
@@ -763,7 +763,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Call a static method with a return type
+        /// Call a static method with a return type
         /// </summary>
         /// <param name="name">Name of the method</param>
         /// <param name="param">The paramters that need to be passed into the method.</param>
@@ -774,7 +774,7 @@ namespace COSML
         public static TReturn CallMethod<TType, TReturn>(string name, params object[] param) => CallMethod<TReturn>(typeof(TType), name, param);
 
         /// <summary>
-        ///     Call a static method without a return type
+        /// Call a static method without a return type
         /// </summary>
         /// <param name="name">Name of the method</param>
         /// <param name="param">The paramters that need to be passed into the method.</param>
@@ -784,7 +784,7 @@ namespace COSML
         public static void CallMethod<TType>(string name, params object[] param) => CallMethod(typeof(TType), name, param);
 
         /// <summary>
-        ///     Call a static method with a return type (for static classes)
+        /// Call a static method with a return type (for static classes)
         /// </summary>
         /// <param name="type">Static Type which static method resides upon</param>
         /// <param name="name">Name of the method</param>
@@ -799,7 +799,7 @@ namespace COSML
         }
 
         /// <summary>
-        ///     Call a static method without a return type (for static classes)
+        /// Call a static method without a return type (for static classes)
         /// </summary>
         /// <param name="type">Static Type which static method resides upon</param>
         /// <param name="name">Name of the method</param>

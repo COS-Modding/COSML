@@ -1,119 +1,118 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<RootNamespace>COSML</RootNamespace>
-		<AssemblyName>Assembly-CSharp.mm</AssemblyName>
-		<TargetFramework>net472</TargetFramework>
-		<AssemblyTitle>Chants Of Sennaar Mod Loader</AssemblyTitle>
-		<Product>COSML</Product>
-		<Copyright>Copyright © 2023</Copyright>
-		<OutputPath>bin\$(Configuration)\</OutputPath>
-		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<RestorePackagesPath>packages</RestorePackagesPath>
-		<LangVersion>latest</LangVersion>
-		<NoWarn>$(NoWarn);1591;626</NoWarn>
-	</PropertyGroup>
+    <PropertyGroup>
+        <RootNamespace>COSML</RootNamespace>
+        <AssemblyName>Assembly-CSharp.mm</AssemblyName>
+        <TargetFramework>net472</TargetFramework>
+        <AssemblyTitle>Chants Of Sennaar Mod Loader</AssemblyTitle>
+        <Product>COSML</Product>
+        <Copyright>Copyright © 2023</Copyright>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <RestorePackagesPath>packages</RestorePackagesPath>
+        <LangVersion>latest</LangVersion>
+        <NoWarn>$(NoWarn);1591;626</NoWarn>
+    </PropertyGroup>
 
-	<PropertyGroup>
-		<VanillaDir>$(SolutionDir)/Vanilla</VanillaDir>
-		<OutputDir>$(SolutionDir)/OutputFinal</OutputDir>
-		<Mono Condition="$(OS) == WINDOWS_NT" />
-		<Mono Condition="$(OS) != WINDOWS_NT">mono</Mono>
-	</PropertyGroup>
+	<Import Project="LocalBuildProperties.props" Condition="Exists('LocalBuildProperties.props')"/>
 
-	<ItemGroup>
-		<Files Include="$(SolutionDir)/Vanilla/*" />
+    <PropertyGroup>
+        <Mono Condition="$(OS) == WINDOWS_NT" />
+        <Mono Condition="$(OS) != WINDOWS_NT">mono</Mono>
+    </PropertyGroup>
 
-		<BuildDir Include="$(TargetDir)" />
+    <ItemGroup>
+        <Files Include="$(SolutionDir)/Vanilla/*" />
 
-		<Dependencies Include="$(TargetDir)MMHOOK_Assembly-CSharp.dll" />
-		<Dependencies Include="$(TargetDir)MonoMod.Utils.dll" />
-		<Dependencies Include="$(TargetDir)Mono.Cecil.dll" />
-		<Dependencies Include="$(TargetDir)MonoMod.RuntimeDetour.dll" />
-	</ItemGroup>
+        <BuildDir Include="$(TargetDir)" />
 
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Delete Condition="Exists('$(OutputDir)')" Files="$(OutputDir)" />
+        <Dependencies Include="$(TargetDir)MMHOOK_Assembly-CSharp.dll" />
+        <Dependencies Include="$(TargetDir)MonoMod.Utils.dll" />
+        <Dependencies Include="$(TargetDir)Mono.Cecil.dll" />
+        <Dependencies Include="$(TargetDir)MonoMod.RuntimeDetour.dll" />
+    </ItemGroup>
 
-		<Copy SkipUnchangedFiles="true" SourceFiles="@(Files)" DestinationFolder="@(BuildDir)" />
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <Delete Condition="Exists('$(OutputDir)')" Files="$(OutputDir)" />
 
-		<Delete Condition="Exists('MONOMODDED_Assembly-CSharp.dll')" Files="MONOMODDED_Assembly-CSharp.dll" />
-		<Exec WorkingDirectory="@(BuildDir)" Command="$(Mono) MonoMod.exe Assembly-CSharp.dll" />
+        <Copy SkipUnchangedFiles="true" SourceFiles="@(Files)" DestinationFolder="@(BuildDir)" />
 
-		<!-- Generate Hooks !-->
-		<Exec Condition="!Exists('$(TargetDir)MMHOOK_Assembly-CSharp.dll')" WorkingDirectory="@(BuildDir)" Command="$(Mono) MonoMod.RuntimeDetour.HookGen.exe --private Assembly-CSharp.dll" />
-	</Target>
+        <Delete Condition="Exists('MONOMODDED_Assembly-CSharp.dll')" Files="MONOMODDED_Assembly-CSharp.dll" />
+        <Exec WorkingDirectory="@(BuildDir)" Command="$(Mono) MonoMod.exe Assembly-CSharp.dll" />
 
-	<Target Name="OutputFinal" AfterTargets="PostBuild">
-		<!-- Cleanup -->
-		<RemoveDir Directories="$(OutputDir)/" />
+        <!-- Generate Hooks !-->
+        <Exec Condition="!Exists('$(TargetDir)MMHOOK_Assembly-CSharp.dll')" WorkingDirectory="@(BuildDir)" Command="$(Mono) MonoMod.RuntimeDetour.HookGen.exe --private Assembly-CSharp.dll" />
+    </Target>
 
-		<!-- Make the output directory -->
-		<MakeDir Directories="$(OutputDir)/" />
+    <Target Name="OutputFinal" AfterTargets="PostBuild">
+        <!-- Cleanup -->
+        <RemoveDir Directories="$(OutputDir)/" />
 
-		<!-- Copy the API -->
-		<Copy SourceFiles="$(TargetDir)MONOMODDED_Assembly-CSharp.dll" DestinationFiles="$(OutputDir)/Assembly-CSharp.dll" />
-		<Copy SourceFiles="$(TargetDir)Assembly-CSharp.mm.xml" DestinationFiles="$(OutputDir)/Assembly-CSharp.xml" />
+        <!-- Make the output directory -->
+        <MakeDir Directories="$(OutputDir)/" />
 
-		<!-- Copy the dependencies for the API and hooks for mods -->
-		<Copy SourceFiles="@(Dependencies)" DestinationFolder="$(OutputDir)" />
-	</Target>
+        <!-- Copy the API -->
+        <Copy SourceFiles="$(TargetDir)MONOMODDED_Assembly-CSharp.dll" DestinationFiles="$(OutputDir)/Assembly-CSharp.dll" />
+        <Copy SourceFiles="$(TargetDir)Assembly-CSharp.mm.xml" DestinationFiles="$(OutputDir)/Assembly-CSharp.xml" />
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-		<DebugType>full</DebugType>
-		<DocumentationFile>bin\$(Configuration)\Assembly-CSharp.mm.xml</DocumentationFile>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-		<DebugType>pdbonly</DebugType>
-		<DocumentationFile>bin\$(Configuration)\Assembly-CSharp.mm.xml</DocumentationFile>
-	</PropertyGroup>
+        <!-- Copy the dependencies for the API and hooks for mods -->
+        <Copy SourceFiles="@(Dependencies)" DestinationFolder="$(OutputDir)" />
+    </Target>
 
-	<ItemGroup>
-		<PackageReference Include="MonoMod" Version="22.7.31.1">
-			<IncludeAssets>all</IncludeAssets>
-		</PackageReference>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+        <DebugType>full</DebugType>
+        <DocumentationFile>bin\$(Configuration)\Assembly-CSharp.mm.xml</DocumentationFile>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+        <DebugType>pdbonly</DebugType>
+        <DocumentationFile>bin\$(Configuration)\Assembly-CSharp.mm.xml</DocumentationFile>
+    </PropertyGroup>
 
-		<PackageReference Include="MonoMod.RuntimeDetour" Version="22.7.31.1">
-			<IncludeAssets>all</IncludeAssets>
-		</PackageReference>
+    <ItemGroup>
+        <PackageReference Include="MonoMod" Version="22.7.31.1">
+            <IncludeAssets>all</IncludeAssets>
+        </PackageReference>
 
-		<PackageReference Include="MonoMod.RuntimeDetour.HookGen" Version="22.7.31.1">
-			<IncludeAssets>all</IncludeAssets>
-		</PackageReference>
+        <PackageReference Include="MonoMod.RuntimeDetour" Version="22.7.31.1">
+            <IncludeAssets>all</IncludeAssets>
+        </PackageReference>
 
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-	</ItemGroup>
+        <PackageReference Include="MonoMod.RuntimeDetour.HookGen" Version="22.7.31.1">
+            <IncludeAssets>all</IncludeAssets>
+        </PackageReference>
 
-	<ItemGroup>
-		<Reference Include="Assembly-CSharp">
-			<HintPath>$(VanillaDir)\Assembly-CSharp.dll</HintPath>
-			<SpecificVersion>False</SpecificVersion>
-		</Reference>
-		<Reference Include="mscorlib">
-			<HintPath>$(VanillaDir)\mscorlib.dll</HintPath>
-		</Reference>
-		<Reference Include="netstandard">
-			<HintPath>$(VanillaDir)\netstandard.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine">
-			<HintPath>$(VanillaDir)\UnityEngine.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.CoreModule">
-			<HintPath>$(VanillaDir)\UnityEngine.CoreModule.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.UI">
-			<HintPath>$(VanillaDir)\UnityEngine.UI.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.UIModule">
-			<HintPath>$(VanillaDir)\UnityEngine.UIModule.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.InputLegacyModule">
-			<HintPath>$(VanillaDir)\UnityEngine.InputLegacyModule.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.TextRenderingModule">
-			<HintPath>$(VanillaDir)\UnityEngine.TextRenderingModule.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.AnimationModule">
-			<HintPath>$(VanillaDir)\UnityEngine.AnimationModule.dll</HintPath>
-		</Reference>
-	</ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Assembly-CSharp">
+            <HintPath>$(VanillaDir)\Assembly-CSharp.dll</HintPath>
+            <SpecificVersion>False</SpecificVersion>
+        </Reference>
+        <Reference Include="mscorlib">
+            <HintPath>$(VanillaDir)\mscorlib.dll</HintPath>
+        </Reference>
+        <Reference Include="netstandard">
+            <HintPath>$(VanillaDir)\netstandard.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine">
+            <HintPath>$(VanillaDir)\UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule">
+            <HintPath>$(VanillaDir)\UnityEngine.CoreModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UI">
+            <HintPath>$(VanillaDir)\UnityEngine.UI.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UIModule">
+            <HintPath>$(VanillaDir)\UnityEngine.UIModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.InputLegacyModule">
+            <HintPath>$(VanillaDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.TextRenderingModule">
+            <HintPath>$(VanillaDir)\UnityEngine.TextRenderingModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.AnimationModule">
+            <HintPath>$(VanillaDir)\UnityEngine.AnimationModule.dll</HintPath>
+        </Reference>
+    </ItemGroup>
 </Project>

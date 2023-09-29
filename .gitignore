@@ -399,3 +399,5 @@ FodyWeavers.xsd
 
 Vanilla/
 OutputFinal/
+
+Directory.build.props

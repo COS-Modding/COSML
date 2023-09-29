@@ -87,7 +87,7 @@ namespace COSML.Patches
         public extern void orig_OnClic(int buttonId);
         public new void OnClic(int buttonId)
         {
-            GameController instance = GameController.GetInstance();
+            GameController instance = (GameController)GameController.GetInstance();
             InputsController inputsController = instance.GetInputsController();
             UIController uIController = (UIController)instance.GetUIController();
             switch (buttonId)

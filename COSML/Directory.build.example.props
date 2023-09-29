@@ -1,0 +1,6 @@
+<Project>
+    <PropertyGroup>
+        <VanillaDir>../Vanilla</VanillaDir>
+        <OutputDir>../OutputFinal</OutputDir>
+    </PropertyGroup>
+</Project>

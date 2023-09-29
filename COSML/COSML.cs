@@ -15,7 +15,7 @@ using USceneManager = UnityEngine.SceneManagement.SceneManager;
 namespace COSML
 {
     /// <summary>
-    ///     Handles loading of mods.
+    /// Handles loading of mods.
     /// </summary>
     internal static class COSML
     {
@@ -73,13 +73,13 @@ namespace COSML
             {
                 Logging.InitializeFileStream();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 // We can still log to the console at least, if that's enabled.
-                Logging.API.Error(e);
+                Logging.API.Error(ex);
             }
 
-            Logging.API.Info($"Mod loader: {ModHooks.ModVersion}");
+            Logging.API.Info($"Mod loader: {ModHooks.COSMLVersion}");
             Logging.API.Info("Starting mod loading");
 
             string managed_path = SystemInfo.operatingSystemFamily switch
@@ -136,13 +136,13 @@ namespace COSML
                 {
                     asms.Add(Assembly.LoadFrom(path));
                 }
-                catch (FileLoadException e)
+                catch (FileLoadException ex)
                 {
-                    Logging.API.Error($"Unable to load assembly - {e}");
+                    Logging.API.Error($"Unable to load assembly - {ex}");
                 }
-                catch (BadImageFormatException e)
+                catch (BadImageFormatException ex)
                 {
-                    Logging.API.Error($"Assembly is bad image. {e}");
+                    Logging.API.Error($"Assembly is bad image. {ex}");
                 }
                 catch (PathTooLongException)
                 {
@@ -164,9 +164,9 @@ namespace COSML
                 {
                     asmTypes = asm.GetTypes();
                 }
-                catch (ReflectionTypeLoadException e)
+                catch (ReflectionTypeLoadException ex)
                 {
-                    asmTypes = e.Types.Where(x => x is not null);
+                    asmTypes = ex.Types.Where(x => x is not null);
                 }
 
                 try
@@ -195,9 +195,9 @@ namespace COSML
                                 );
                             }
                         }
-                        catch (Exception e)
+                        catch (Exception ex)
                         {
-                            Logging.API.Error(e);
+                            Logging.API.Error(ex);
 
                             TryAddModInstance(
                                 ty,
@@ -212,9 +212,9 @@ namespace COSML
                         }
                     }
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    Logging.API.Error(e);
+                    Logging.API.Error(ex);
                 }
 
                 if (!foundMod)
@@ -430,10 +430,10 @@ namespace COSML
                     mod.Mod.Initialize(preloadedObjects);
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 mod.Error = ModErrorState.Initialize;
-                Logging.API.Error($"Failed to load mod `{mod.Mod.GetName()}`\n{e}");
+                Logging.API.Error($"Failed to load mod `{mod.Mod.GetName()}`\n{ex}");
             }
 
             if (updateModText) UpdateModText();

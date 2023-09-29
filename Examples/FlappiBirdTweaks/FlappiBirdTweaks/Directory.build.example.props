@@ -1,0 +1,5 @@
+<Project>
+    <PropertyGroup>
+        <ManagedDir>PATH_TO_GAME_MANAGED_DIRECTORY</ManagedDir>
+    </PropertyGroup>
+</Project>

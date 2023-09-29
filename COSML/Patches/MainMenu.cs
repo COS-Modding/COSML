@@ -1,6 +1,5 @@
 using COSML.Log;
 using COSML.Menu;
-using COSML.Modding;
 using MonoMod;
 using System;
 using UnityEngine;
@@ -25,7 +24,7 @@ namespace COSML.Patches
         {
             orig_Init();
 
-            ModHooks.SetCOSMLVersion(this);
+            copyright.text += $" (COSML-{COSML.Version})";
         }
 
         public extern void orig_Hide();
@@ -44,8 +43,6 @@ namespace COSML.Patches
 
             try
             {
-                Logging.API.Debug("Creating mod menu");
-
                 SaveElements();
 
                 GameObject modMenuGo = CreateMenu<ModsMainMenu>(new MenuOptions

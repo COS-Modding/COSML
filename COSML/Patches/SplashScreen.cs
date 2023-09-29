@@ -51,14 +51,6 @@ namespace COSML.Patches
             {
                 Logging.API.Debug($"MainMenu: Already begun mod loading (state {COSML.LoadState})");
             }
-
-            // Hook OnApplicationQuit
-            GameObject oaq = new()
-            {
-                name = "ApplicationQuit Hook"
-            };
-            DontDestroyOnLoad(oaq);
-            oaq.AddComponent<ApplicationQuit>();
         }
     }
 }

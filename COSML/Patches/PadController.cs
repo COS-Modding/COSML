@@ -11,6 +11,7 @@ namespace COSML.Patches
 
         public PadController(Cursors newCursors, Camera newMainCamera) : base(newCursors, newMainCamera) { }
 
+        // Force update manually for paginations
         public void ForceUpdateUIBrowser(AbstractPadUI abstractPadUI)
         {
             uiBrowser = abstractPadUI.GetBrowser();

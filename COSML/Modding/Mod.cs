@@ -1,24 +1,24 @@
 using COSML.Log;
 using MonoMod.Utils;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace COSML.Modding
 {
     /// <inheritdoc cref="Loggable" />
     /// <inheritdoc cref="IMod" />
     /// <summary>
-    ///     Base mod class.
+    /// Base mod class.
     /// </summary>
     public abstract class Mod : Loggable, IMod
     {
-        private readonly string _globalSettingsPath;
+        private readonly string globalSettingsPath;
 
         private readonly Type globalSettingsType = null;
         private readonly FastReflectionDelegate onLoadGlobalSettings;
@@ -28,13 +28,13 @@ namespace COSML.Modding
         private readonly FastReflectionDelegate onSaveSaveSettings;
 
         /// <summary>
-        ///     The Mods Name
+        /// The Mods Name
         /// </summary>
         public readonly string Name;
 
         /// <inheritdoc />
         /// <summary>
-        ///     Constructs the mod, assigns the instance and sets the name.
+        /// Constructs the mod, assigns the instance and sets the name.
         /// </summary>
         protected Mod(string name = null)
         {
@@ -91,7 +91,7 @@ namespace COSML.Modding
 
             Info("Initializing");
 
-            _globalSettingsPath ??= GetGlobalSettingsPath();
+            globalSettingsPath ??= GetGlobalSettingsPath();
 
             LoadGlobalSettings();
             HookSaveMethods();
@@ -116,23 +116,17 @@ namespace COSML.Modding
 
         /// <inheritdoc />
         /// <summary>
-        ///     Get's the Mod's Name
+        /// Get's the mod's Name
         /// </summary>
         /// <returns></returns>
-        public string GetName()
-        {
-            return Name;
-        }
+        public string GetName() => Name;
 
         /// <inheritdoc />
         /// <summary>
-        ///     Returns the objects to preload in order for the mod to work.
+        /// Returns the objects to preload in order for the mod to work.
         /// </summary>
         /// <returns>A List of tuples containing scene name, object name</returns>
-        public virtual List<(string, string)> GetPreloadNames()
-        {
-            return null;
-        }
+        public virtual List<(string, string)> GetPreloadNames() => null;
 
         /// <summary>
         /// A list of requested scenes to be preloaded and actions to execute on loading of those scenes
@@ -142,60 +136,45 @@ namespace COSML.Modding
 
         /// <inheritdoc />
         /// <summary>
-        ///     Called after preloading of all mods.
+        /// Called after preloading of all mods.
         /// </summary>
         /// <param name="preloadedObjects">The preloaded objects relevant to this <see cref="Mod" /></param>
         public virtual void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects) => Initialize();
 
         /// <inheritdoc />
         /// <summary>
-        ///     Returns version of Mod
+        /// Returns version of Mod
         /// </summary>
         /// <returns>Mod Version</returns>
-        public virtual string GetVersion()
-        {
-            return "UNKNOWN";
-        }
+        public virtual string GetVersion() => "UNKNOWN";
 
         /// <summary>
-        ///     Controls when this mod should load compared to other mods.  Defaults to ordered by name.
+        /// Controls when this mod should load compared to other mods.  Defaults to ordered by name.
         /// </summary>
         /// <returns></returns>
-        public virtual int LoadPriority()
-        {
-            return 1;
-        }
+        public virtual int LoadPriority() => 1;
 
         /// <summary>
-        ///     Called after preloading of all mods.
+        /// Called after preloading of all mods.
         /// </summary>
         public virtual void Initialize() { }
-
-        /// <summary>
-        ///     If this mod defines a menu via the <see cref="IModMenu"/> or <see cref="ICustomMenuMod"/> interfaces, override this method to 
-        ///     change the text of the button to jump to this mod's menu.
-        /// </summary>
-        /// <returns></returns>
-        //public virtual string GetMenuButtonText() => $"{GetName()} {Language.Language.Get("MAIN_OPTIONS", "MainMenu")}";
 
         private void HookSaveMethods()
         {
             ModHooks.ApplicationQuitHook += SaveGlobalSettings;
             ModHooks.SaveLocalSettings += SaveLocalSettings;
             ModHooks.LoadLocalSettings += LoadLocalSettings;
-            SceneManager.activeSceneChanged += SceneChanged;
         }
 
-        private void SceneChanged(Scene arg0, Scene arg1)
+        private void PlaceChanged(Place from, Place to)
         {
-            Info($"Changed scene from {arg0.name} to {arg1.name}");
-            if (arg1.name != Constants.MAIN_MENU_SCENE_NAME) return;
+            if (from.name == Constants.SPLASH_SCREEN_SCENE_NAME || to.name != Constants.MAIN_MENU_SCENE_NAME) return;
 
-            Info("Save load settings (in theory)");
-            //if (saveSettingsType is Type saveType)
-            //{
-            //    onLoadSaveSettings(this, Activator.CreateInstance(saveType));
-            //}
+            if (saveSettingsType is Type saveType)
+            {
+                Debug($"onLoadSaveSettings: {saveType.Name}");
+                onLoadSaveSettings(this, Activator.CreateInstance(saveType));
+            }
         }
 
         private void LoadGlobalSettings()
@@ -205,32 +184,29 @@ namespace COSML.Modding
                 // test to see if we can load global settings from this mod
                 if (globalSettingsType is Type saveType)
                 {
-                    if (!File.Exists(_globalSettingsPath))
-                        return;
+                    if (!File.Exists(globalSettingsPath)) return;
                     Info("Loading Global Settings");
 
-                    if (TryLoadGlobalSettings(_globalSettingsPath, saveType))
-                        return;
+                    if (TryLoadGlobalSettings(globalSettingsPath, saveType)) return;
 
                     Error($"Null global settings passed to {GetName()}");
 
-                    string globalSettingsBackup = _globalSettingsPath + ".bak";
-                    if (!File.Exists(globalSettingsBackup))
-                        return;
+                    string globalSettingsBackup = globalSettingsPath + ".bak";
+                    if (!File.Exists(globalSettingsBackup)) return;
 
                     if (TryLoadGlobalSettings(globalSettingsBackup, saveType))
                     {
                         Info("Successfully loaded global settings from backup");
-                        File.Delete(_globalSettingsPath);
-                        File.Copy(globalSettingsBackup, _globalSettingsPath);
+                        File.Delete(globalSettingsPath);
+                        File.Copy(globalSettingsBackup, globalSettingsPath);
                     }
                     Error("Failed to load global settings from backup");
 
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Error(e);
+                Error(ex);
             }
         }
 
@@ -239,11 +215,11 @@ namespace COSML.Modding
         /// </summary>
         private bool TryLoadGlobalSettings(string path, Type saveType)
         {
-            using FileStream fileStream = File.OpenRead(_globalSettingsPath);
+            using FileStream fileStream = File.OpenRead(path);
             using var reader = new StreamReader(fileStream);
             string json = reader.ReadToEnd();
 
-            object obj = JsonConvert.DeserializeObject(
+            object settings = JsonConvert.DeserializeObject(
                 json,
                 saveType,
                 new JsonSerializerSettings
@@ -253,9 +229,9 @@ namespace COSML.Modding
                 }
             );
 
-            if (obj is null) return false;
+            if (settings is null) return false;
 
-            onLoadGlobalSettings(this, obj);
+            onLoadGlobalSettings(this, settings);
             return true;
         }
 
@@ -269,16 +245,16 @@ namespace COSML.Modding
                 if (globalSettingsType is Type saveType)
                 {
                     Info("Saving Global Settings");
-                    object obj = onSaveGlobalSettings(this);
-                    if (obj is null) return;
+                    object settings = onSaveGlobalSettings(this);
+                    if (settings is null) return;
 
-                    if (File.Exists(_globalSettingsPath + ".bak")) File.Delete(_globalSettingsPath + ".bak");
-                    if (File.Exists(_globalSettingsPath)) File.Move(_globalSettingsPath, _globalSettingsPath + ".bak");
+                    if (File.Exists(globalSettingsPath + ".bak")) File.Delete(globalSettingsPath + ".bak");
+                    if (File.Exists(globalSettingsPath)) File.Move(globalSettingsPath, globalSettingsPath + ".bak");
 
-                    using FileStream fileStream = File.Create(_globalSettingsPath);
+                    using FileStream fileStream = File.Create(globalSettingsPath);
                     using var writer = new StreamWriter(fileStream);
                     writer.Write(JsonConvert.SerializeObject(
-                        obj,
+                        settings,
                         Formatting.Indented,
                         new JsonSerializerSettings
                         {
@@ -287,9 +263,9 @@ namespace COSML.Modding
                     ));
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Error(e);
+                Error(ex);
             }
         }
 
@@ -298,12 +274,12 @@ namespace COSML.Modding
             try
             {
                 if (saveSettingsType is not Type saveType) return;
-                if (!data.modData.TryGetValue(GetName(), out var obj)) return;
+                if (!data.modData.TryGetValue(GetName(), out var settings)) return;
 
                 onLoadSaveSettings
                 (
                     this,
-                    obj.ToObject
+                    settings.ToObject
                     (
                         saveType,
                         JsonSerializer.Create
@@ -317,9 +293,9 @@ namespace COSML.Modding
                     )
                 );
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Error(e);
+                Error(ex);
             }
         }
 
@@ -327,31 +303,26 @@ namespace COSML.Modding
         {
             try
             {
-                if (saveSettingsType is not Type saveType)
-                    return;
+                if (saveSettingsType is not Type saveType) return;
 
-                //var settings = this.onSaveSaveSettings(this);
+                var settings = onSaveSaveSettings(this);
+                if (settings is null) return;
 
-                //if (settings is null)
-                //    return;
-
-                //data.modData[this.GetName()] = JToken.FromObject
-                //(
-                //    settings,
-                //    JsonSerializer.Create
-                //    (
-                //        new JsonSerializerSettings
-                //        {
-                //            ContractResolver = ShouldSerializeContractResolver.Instance,
-                //            TypeNameHandling = TypeNameHandling.Auto,
-                //            Converters = JsonConverterTypes.ConverterTypes
-                //        }
-                //    )
-                //);
+                data.modData[GetName()] = JToken.FromObject
+                (
+                    settings,
+                    JsonSerializer.Create
+                    (
+                        new JsonSerializerSettings
+                        {
+                            TypeNameHandling = TypeNameHandling.Auto
+                        }
+                    )
+                );
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Error(e);
+                Error(ex);
             }
         }
     }

@@ -26,7 +26,7 @@ internal class Preloader : MonoBehaviour
     }
 
     /// <summary>
-    ///     This is the actual preloading process.
+    /// This is the actual preloading process.
     /// </summary>
     /// <returns></returns>
     private IEnumerator DoPreload
@@ -195,7 +195,7 @@ internal class Preloader : MonoBehaviour
     }
 
     /// <summary>
-    ///     Clean up everything from preloading.
+    /// Clean up everything from preloading.
     /// </summary>
     /// <returns></returns>
     private IEnumerator CleanUpPreloading()

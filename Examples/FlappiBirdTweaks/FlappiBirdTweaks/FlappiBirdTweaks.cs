@@ -2,7 +2,7 @@
 
 namespace FlappiBirdTweaks
 {
-    public class FlappiBirdTweaks : Mod, IGlobalSettings<GlobalData>, ILocalSettings<LocalData>, IModTogglable
+    public class FlappiBirdTweaks : Mod, ILocalSettings<LocalData>, IModTogglable
     {
         private GlobalData globalData = new GlobalData();
         private LocalData localData = new LocalData();
@@ -40,8 +40,8 @@ namespace FlappiBirdTweaks
             orig_downSpeed = self.downSpeed;
 
             Info("Set new speed values");
-            self.upSpeed = globalData.upSpeed;
-            self.downSpeed = globalData.downSpeed;
+            self.upSpeed = localData.upSpeed;
+            self.downSpeed = localData.downSpeed;
         }
 
         public void Unload()
