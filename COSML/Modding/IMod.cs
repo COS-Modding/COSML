@@ -34,7 +34,7 @@ namespace COSML.Modding
         /// Called after preloading of all mods.
         /// </summary>
         /// <param name="preloadedObjects">The preloaded objects relevant to this <see cref="Mod" /></param>
-        void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects);
+        void Init(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects);
 
         /// <summary>
         /// Returns version of Mod

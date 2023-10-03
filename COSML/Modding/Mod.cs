@@ -139,7 +139,7 @@ namespace COSML.Modding
         /// Called after preloading of all mods.
         /// </summary>
         /// <param name="preloadedObjects">The preloaded objects relevant to this <see cref="Mod" /></param>
-        public virtual void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects) => Initialize();
+        public virtual void Init(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects) => Init();
 
         /// <inheritdoc />
         /// <summary>
@@ -157,7 +157,7 @@ namespace COSML.Modding
         /// <summary>
         /// Called after preloading of all mods.
         /// </summary>
-        public virtual void Initialize() { }
+        public virtual void Init() { }
 
         private void HookSaveMethods()
         {

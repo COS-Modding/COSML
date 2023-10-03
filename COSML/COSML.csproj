@@ -12,7 +12,7 @@
         <NoWarn>$(NoWarn);1591;626</NoWarn>
     </PropertyGroup>
 
-	<Import Project="LocalBuildProperties.props" Condition="Exists('LocalBuildProperties.props')"/>
+    <Import Project="LocalBuildProperties.props" Condition="Exists('LocalBuildProperties.props')"/>
 
     <PropertyGroup>
         <Mono Condition="$(OS) == WINDOWS_NT" />

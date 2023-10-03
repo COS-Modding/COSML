@@ -19,7 +19,7 @@ namespace FlappiBirdTweaks
         private float orig_downSpeed;
         private FlappiBirdPuzzle instance;
 
-        public override void Initialize()
+        public override void Init()
         {
             Info("Loaded FlappiBirdTweaks");
 

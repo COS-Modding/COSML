@@ -8,7 +8,7 @@ namespace COSML.Modding
     public interface IModTogglable : IMod
     {
         /// <summary>
-        /// Called when the Mod is disabled or unloaded.  Ensure you unhook any events that you hooked up in the Initialize
+        /// Called when the Mod is disabled or unloaded. Ensure you unhook any events that you hooked up in the Init
         /// method.
         /// </summary>
         void Unload();

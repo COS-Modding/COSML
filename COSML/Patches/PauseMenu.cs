@@ -16,24 +16,22 @@ namespace COSML.Patches
         {
             // Add mods button
             GameObject pauseMenuGo = GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Pause");
-            GameObject modButtonGo = CreateButton(new ButtonOptions
+            modButton = CreateButton(new InternalButtonData
             {
-                name = "Mods_Button",
                 parent = pauseMenuGo.transform,
                 menu = this,
                 label = "MODS",
-                buttonId = 1
+                buttonId = 1,
+                position = 1
             });
-            modButtonGo.transform.localPosition = new Vector3(0, 284, 0);
-            modButton = modButtonGo.GetComponent<MainMenuButton>();
 
             // Edit help button
             GameObject helpButtonGo = pauseMenuGo.transform.Find($"MenuBarre_Aide").gameObject;
             helpButtonGo.GetComponent<MainMenuButton>().buttonId = 2;
-            helpButtonGo.transform.localPosition = new Vector3(0, 164, 0);
+            helpButtonGo.transform.localPosition = GetOptionButtonLocalPosition(2);
             // Edit quit button
             GameObject quitButtonGo = pauseMenuGo.transform.Find($"MenuBarre_Quitter").gameObject;
-            quitButtonGo.transform.localPosition = new Vector3(0, 44, 0);
+            quitButtonGo.transform.localPosition = GetOptionButtonLocalPosition(3);
             quitButtonGo.GetComponent<MainMenuButton>().buttonId = 3;
         }
 

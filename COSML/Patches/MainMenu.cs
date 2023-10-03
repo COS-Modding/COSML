@@ -45,13 +45,11 @@ namespace COSML.Patches
             {
                 SaveElements();
 
-                GameObject modMenuGo = CreateMenu<ModsMainMenu>(new MenuOptions
+                modMenu = CreateMenu<ModsMainMenu>(new InternalMenuData
                 {
-                    name = "Menu_Mods",
-                    label = "MODS"
+                    label = "Mods",
+                    parent = rootMenu
                 });
-                modMenu = modMenuGo.GetComponent<ModsMainMenu>();
-                modMenu.Init();
 
                 // Root main menu
                 rootMenu.EditMenu();

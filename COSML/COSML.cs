@@ -400,7 +400,7 @@ namespace COSML
                         case ModErrorState.Duplicate:
                             builder.AppendLine($"{mod.Name} : Failed to load! Duplicate mod detected");
                             break;
-                        case ModErrorState.Initialize:
+                        case ModErrorState.Init:
                             builder.AppendLine($"{mod.Name} : Failed to initialize! Check ModLog.txt");
                             break;
                         case ModErrorState.Unload:
@@ -427,12 +427,12 @@ namespace COSML
                 if (mod is { Enabled: false, Error: null })
                 {
                     mod.Enabled = true;
-                    mod.Mod.Initialize(preloadedObjects);
+                    mod.Mod.Init(preloadedObjects);
                 }
             }
             catch (Exception ex)
             {
-                mod.Error = ModErrorState.Initialize;
+                mod.Error = ModErrorState.Init;
                 Logging.API.Error($"Failed to load mod `{mod.Mod.GetName()}`\n{ex}");
             }
 
@@ -477,7 +477,7 @@ namespace COSML
         {
             Construct,
             Duplicate,
-            Initialize,
+            Init,
             Unload
         }
     }

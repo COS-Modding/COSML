@@ -18,7 +18,8 @@ namespace COSML.Menu
         private int currentPageNumber = 1;
         private int totalPagesCount;
 
-        private Dictionary<int, ModInstance> buttonsMod;
+        private Dictionary<int, ModInstance> modButtons;
+        private Dictionary<IModMenu, ModMenu> modMenus;
 
         public override void Init()
         {
@@ -40,7 +41,8 @@ namespace COSML.Menu
             if (ModInstancesArr.Length <= 0) return;
 
             pages = new Dictionary<int, GameObject>();
-            buttonsMod = new Dictionary<int, ModInstance>();
+            modButtons = new Dictionary<int, ModInstance>();
+            modMenus = new Dictionary<IModMenu, ModMenu>();
             float optionYDelta = 0;
             int modOrder = 1;
             int modPage;
@@ -49,8 +51,8 @@ namespace COSML.Menu
             foreach (ModInstance modInst in ModInstancesArr)
             {
                 // First mod per page
-                modPage = (int)Math.Ceiling((double)modOrder / MENU_OPTION_MAX_PER_PAGE);
-                if ((modOrder - 1) % MENU_OPTION_MAX_PER_PAGE == 0)
+                modPage = (int)Math.Ceiling((double)modOrder / OPTION_MENU_MAX_PER_PAGE);
+                if ((modOrder - 1) % OPTION_MENU_MAX_PER_PAGE == 0)
                 {
                     GameObject currentPageGo = new($"Mods_Page_{modPage}");
                     currentPageGo.transform.SetParent(transform, false);
@@ -58,45 +60,11 @@ namespace COSML.Menu
                     pages.Add(modPage, currentPageGo);
                 }
 
-                // Menu
-                int buttonId = (modOrder - 1) % MENU_OPTION_MAX_PER_PAGE;
-                GameObject modButtonGo;
-                try
-                {
-                    if (modInst.Mod is IModTogglable)
-                    {
-                        modButtonGo = CreateToggle(new ToggleOptions
-                        {
-                            name = $"Mods_Button_{modOrder}",
-                            parent = pages[modPage].transform,
-                            menu = this,
-                            buttonId = buttonId,
-                            label = $"{modInst.Name} - {modInst.Mod.GetVersionSafe("???")}",
-                            value = modInst.Enabled
-                        });
-                    }
-                    else
-                    {
-                        modButtonGo = CreateButton(new ButtonOptions
-                        {
-                            name = $"Mods_Button_{modOrder}",
-                            parent = pages[modPage].transform,
-                            menu = this,
-                            buttonId = buttonId,
-                            label = $"{modInst.Name} - {modInst.Mod.GetVersionSafe("???")}",
-                            arrow = modInst.Mod is IModMenu
-                        });
-                    }
+                float yPos = OPTION_MENU_MIN_Y - (optionYDelta % (OPTION_MENU_HEIGHT * OPTION_MENU_MAX_PER_PAGE));
+                AddModButton(modInst, pages[modPage].transform, modOrder);
+                AddModMenu(modInst);
 
-                    modButtonGo.transform.localPosition = new Vector3(0, MENU_OPTION_MIN_Y - (optionYDelta % (MENU_OPTION_HEIGHT * MENU_OPTION_MAX_PER_PAGE)), 0);
-                    buttonsMod.Add(buttonId, modInst);
-                }
-                catch (Exception ex)
-                {
-                    Logging.API.Error($"Error creating menu for {nameof(IModMenu)} {modInst.Name}\n" + ex);
-                }
-
-                optionYDelta += MENU_OPTION_HEIGHT;
+                optionYDelta += OPTION_MENU_HEIGHT;
                 totalPagesCount = modPage;
                 modOrder++;
             }
@@ -104,19 +72,83 @@ namespace COSML.Menu
             // Add pagination
             if (totalPagesCount > 1)
             {
-                GameObject paginationGo = CreateSelect(new SelectOptions
+                pageSelector = CreateSelect(new InternalSelectData
                 {
-                    name = "Pagination_Button",
                     parent = transform,
                     menu = this,
                     label = "PAGE",
                     values = pages.Keys.Select(k => k.ToString()).ToArray(),
-                    currentValue = 0
+                    value = 0,
+                    buttonId = OPTION_MENU_MAX_PER_PAGE,
+                    position = OPTION_MENU_MAX_PER_PAGE + 1
                 });
-                paginationGo.transform.localPosition = new Vector3(0, -916, 0);
-                pageSelector = paginationGo.GetComponent<MainMenuSelector>();
-                pageSelector.buttonId = MENU_OPTION_MAX_PER_PAGE;
-                paginationGo.SetActive(totalPagesCount > 1);
+                pageSelector.gameObject.SetActive(totalPagesCount > 1);
+            }
+        }
+
+        private void AddModButton(ModInstance modInst, Transform parent, int modOrder)
+        {
+            int buttonId = (modOrder - 1) % OPTION_MENU_MAX_PER_PAGE;
+            MonoBehaviour modButton;
+            try
+            {
+                if (modInst.Mod is IModTogglable && modInst.Mod is not IModMenu)
+                {
+                    modButton = CreateToggle(new InternalToggleData
+                    {
+                        parent = parent,
+                        menu = this,
+                        buttonId = buttonId,
+                        position = buttonId,
+                        label = $"{modInst.Name} - {modInst.Mod.GetVersionSafe("???")}",
+                        value = modInst.Enabled,
+                    });
+                }
+                else
+                {
+                    modButton = CreateButton(new InternalButtonData
+                    {
+                        parent = parent,
+                        menu = this,
+                        buttonId = buttonId,
+                        position = buttonId,
+                        label = $"{modInst.Name} - {modInst.Mod.GetVersionSafe("???")}",
+                        arrow = modInst.Mod is IModMenu
+                    });
+                }
+
+                modButtons.Add(buttonId, modInst);
+            }
+            catch (Exception ex)
+            {
+                Logging.API.Error($"Error creating menu for {nameof(IModMenu)} {modInst.Name}\n" + ex);
+            }
+        }
+
+        private void AddModMenu(ModInstance modInst)
+        {
+            if (modInst.Mod is IModMenu mod)
+            {
+                List<IOptionData> menuOptions = mod.GetMenu();
+                if (modInst.Mod is IModTogglable)
+                {
+                    menuOptions.Insert(0, new ToggleData(
+                        "Enable",
+                        modInst.Enabled,
+                        (value) =>
+                        {
+                            if (modInst.Enabled) UnloadMod(modInst);
+                            else LoadMod(modInst);
+                        }
+                    ));
+                }
+                ModMenu modMenu = CreateMenu<ModMenu>(new InternalMenuData
+                {
+                    label = modInst.Name,
+                    parent = this,
+                    options = menuOptions
+                });
+                modMenus.Add(mod, modMenu);
             }
         }
 
@@ -136,6 +168,8 @@ namespace COSML.Menu
                     foreach (Transform mod in pages[currentPageNumber].transform)
                     {
                         mod.GetComponent<MainMenuButton>()?.Loop();
+                        mod.GetComponent<MainMenuSelector>()?.Loop();
+                        mod.GetComponent<MainMenuSlider>()?.Loop();
                     }
                 }
             }
@@ -159,6 +193,8 @@ namespace COSML.Menu
                     foreach (Transform mod in pages[currentPageNumber].transform)
                     {
                         mod.GetComponent<MainMenuButton>()?.InitRoll();
+                        mod.GetComponent<MainMenuSelector>()?.InitRoll();
+                        mod.GetComponent<MainMenuSlider>()?.InitRoll();
                     }
                 }
 
@@ -175,26 +211,26 @@ namespace COSML.Menu
                 foreach (Transform mod in pages[currentPageNumber].transform)
                 {
                     mod.GetComponent<MainMenuButton>()?.ForceExit();
+                    mod.GetComponent<MainMenuSelector>()?.ForceExit();
+                    mod.GetComponent<MainMenuSlider>()?.ForceExit();
                 }
             }
         }
 
         public override void OnClic(int buttonId)
         {
-            Logging.API.Debug($"buttonId: {buttonId}");
             if (buttonId < 0) return;
 
             GameController instance = GameController.GetInstance();
-            //UIController uicontroller = instance.GetUIController();
+            UIController uicontroller = instance.GetUIController();
 
-            if (buttonId < MENU_OPTION_MAX_PER_PAGE)
+            if (buttonId < OPTION_MENU_MAX_PER_PAGE)
             {
-                ModInstance modInst = buttonsMod[buttonId];
+                ModInstance modInst = modButtons[buttonId];
                 if (modInst.Mod is IModMenu)
                 {
-                    Logging.API.Debug("button is IModMenu");
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    //uicontroller.mainMenu.Swap(uicontroller.mainMenu.optionControlsMenu, true);
+                    uicontroller.mainMenu.Swap(modMenus[modInst.Mod as IModMenu], true);
                 }
                 else if (modInst.Mod is IModTogglable)
                 {
@@ -202,11 +238,11 @@ namespace COSML.Menu
                     else LoadMod(modInst);
                 }
             }
-            else if (buttonId == MENU_OPTION_MAX_PER_PAGE && pageSelector != null)
+            else if (buttonId == OPTION_MENU_MAX_PER_PAGE && pageSelector != null)
             {
                 ChangePage(pageSelector.GetCurrentValue() + 1);
             }
-            else if (buttonId == MENU_OPTION_MAX_PER_PAGE + 1)
+            else if (buttonId == OPTION_MENU_MAX_PER_PAGE + 1)
             {
                 GoToPreviousMenu();
             }
@@ -228,24 +264,27 @@ namespace COSML.Menu
             padController.ForceUpdateUIBrowser(this);
         }
 
-        public override bool IsOpen()
-        {
-            return gameObject.activeSelf;
-        }
+        public override bool IsOpen() => gameObject.activeSelf;
 
         public override AbstractUIBrowser GetBrowser()
         {
+            if (browser != null) return browser;
+
             int buttonsCount = pages[currentPageNumber].transform.childCount;
             int btnIndex = 0;
+            bool hasPagination = totalPagesCount > 1 && pageSelector != null;
 
-            OverableUI[][] overableUIs = new OverableUI[buttonsCount + 1][];
+            OverableUI[][] overableUIs = new OverableUI[buttonsCount + (hasPagination ? 1 : 0)][];
             foreach (Transform btn in pages[currentPageNumber].transform)
             {
-                overableUIs[btnIndex] = new OverableUI[1] { btn.GetComponent<MainMenuButton>() };
+                OverableUI btnOver = btn.GetComponent<MainMenuButton>();
+                btnOver ??= btn.GetComponent<MainMenuSelector>()?.over;
+                btnOver ??= btn.GetComponent<MainMenuSlider>()?.over;
+                overableUIs[btnIndex] = new OverableUI[1] { btnOver };
                 btnIndex++;
             }
 
-            if (totalPagesCount > 1 && pageSelector != null)
+            if (hasPagination)
             {
                 overableUIs[buttonsCount] = new OverableUI[1] { pageSelector.over };
             }
@@ -269,10 +308,7 @@ namespace COSML.Menu
             backButton.over.SetTrigger("Hide");
         }
 
-        public void ResetBrowser()
-        {
-            browser = null;
-        }
+        public void ResetBrowser() => browser = null;
 
         public override void Translate(I18nType i18n, I18nPlateformType i18nPlateformType) { }
     }
