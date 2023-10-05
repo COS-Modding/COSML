@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using static UnityEngine.Object;
@@ -23,11 +24,14 @@ namespace COSML.Menu
         public static GameObject buttonTemplate;
         public static GameObject selectTemplate;
         public static GameObject sliderTemplate;
+        public static GameObject inputTextTemplate;
+
+        private static Sprite inputButtonBackground;
 
         private static bool cloned = false;
 
         /// <summary>
-        /// Save options
+        /// Backup useful common elements.
         /// </summary>
         public static void SaveElements()
         {
@@ -36,26 +40,27 @@ namespace COSML.Menu
             GameObject templates = new("COSMLTemplates");
             templates.SetActive(false);
             DontDestroyOnLoad(templates);
-
             // Menu
             menuTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Options"), templates.transform, false);
             menuTemplate.name = "Menu";
-
             // Root button
             rootButtonTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Principal/Bouton Quit"), templates.transform, false);
             rootButtonTemplate.name = "RootButton";
-
             // Button
             buttonTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_OptionsAudio/MenuBarre_Reset"), templates.transform, false);
             buttonTemplate.name = "Button";
-
             // Select
             selectTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Options/MenuSelecteur_Langue"), templates.transform, false);
             selectTemplate.name = "Select";
-
             // Slider
             sliderTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_OptionsAudio/MenuSlider_General"), templates.transform, false);
             sliderTemplate.name = "Slider";
+            // Input text
+            inputTextTemplate = Instantiate(GameObject.Find($"{Constants.GLOBAL_CANVAS_PATH}/AnnotationUI/popup/InputField/"), templates.transform, false);
+            inputTextTemplate.name = "InputText";
+
+            // Load images
+            inputButtonBackground = Assembly.GetExecutingAssembly().LoadEmbeddedSprite("COSML.Resources.InputButtonBackground.png", 256f);
 
             cloned = true;
         }
@@ -69,8 +74,8 @@ namespace COSML.Menu
         {
             Transform mainMenuTransform = GameObject.Find(Constants.MAIN_MENU_PATH).transform;
             GameObject menuGo = Instantiate(menuTemplate, mainMenuTransform, false);
-            menuGo.name = $"Menu_{data.label?.Replace(" ", "") ?? ""}";
-            menuGo.transform.Find("Text_Titre").gameObject.GetComponent<Text>().text = data.label?.ToUpper() ?? "MENU";
+            menuGo.name = data.name ?? $"Menu_{data.label?.Replace(" ", "") ?? ""}";
+            menuGo.transform.Find("Text_Titre").GetComponent<Text>().text = data.label?.ToUpper() ?? "MENU";
 
             Destroy(menuGo.GetComponent<OptionsMainMenu>());
             T menu = menuGo.AddComponent<T>();
@@ -78,8 +83,8 @@ namespace COSML.Menu
             // Back button
             if (menu is IMainMenu mainMenu)
             {
-                mainMenu.backButton = menuGo.transform.Find("BoutonBack").gameObject.GetComponent<MainMenuButton>();
-                mainMenu.backButton.buttonId = OPTION_MENU_MAX_PER_PAGE + 1;
+                mainMenu.backButton = menuGo.transform.Find("BoutonBack").GetComponent<MainMenuButton>();
+                mainMenu.backButton.buttonId = Constants.BACK_BUTTON_ID;
                 mainMenu.backButton.menu = menu;
             }
 
@@ -115,7 +120,7 @@ namespace COSML.Menu
         internal static MainMenuButton CreateRootButton(InternalButtonData data)
         {
             GameObject buttonGo = data.parent != null ? Instantiate(rootButtonTemplate, data.parent, false) : Instantiate(rootButtonTemplate);
-            buttonGo.name = "Button";
+            buttonGo.name = data.name ?? "RootButton";
             MainMenuButton buttonMenu = buttonGo.GetComponent<MainMenuButton>();
             buttonMenu.menu = data.menu;
             buttonMenu.buttonId = data.buttonId;
@@ -137,7 +142,7 @@ namespace COSML.Menu
         internal static MainMenuButton CreateButton(InternalButtonData data)
         {
             GameObject buttonGo = data.parent != null ? Instantiate(buttonTemplate, data.parent, false) : Instantiate(buttonTemplate);
-            buttonGo.name = "Button";
+            buttonGo.name = data.name ?? "Button";
             MainMenuButton buttonMenu = buttonGo.GetComponent<MainMenuButton>();
             buttonMenu.menu = data.menu;
             buttonMenu.buttonId = data.buttonId;
@@ -158,6 +163,43 @@ namespace COSML.Menu
         }
 
         /// <summary>
+        /// Create a text.
+        /// </summary>
+        /// <param name="data">Text data</param>
+        /// <returns></returns>
+        internal static MainMenuText CreateText(InternalTextData data)
+        {
+            // Base
+            GameObject textGo = data.parent != null ? Instantiate(selectTemplate, data.parent, false) : Instantiate(selectTemplate);
+            textGo.name = data.name ?? "Text";
+            MainMenuSelector selector = textGo.GetComponent<MainMenuSelector>();
+            MainMenuText text = textGo.AddComponent<MainMenuText>();
+            text.menu = data.menu;
+            text.overAnimator = selector.overAnimator;
+            text.transform.localPosition = GetOptionButtonLocalPosition(data.position);
+            Destroy(selector);
+
+            // Text
+            GameObject labelGo = textGo.transform.Find("Text_Libellé").gameObject;
+            Text labelText = labelGo.GetComponent<Text>();
+            labelText.text = data.label?.ToUpper() ?? "TEXT";
+
+            // Over
+            GameObject overGo = textGo.transform.Find("Collider").gameObject;
+            Destroy(overGo.GetComponent<MainMenuSelectorOver>());
+            MainMenuTextOver textButtonOver = overGo.AddComponent<MainMenuTextOver>();
+            textButtonOver.Init(text);
+            text.over = textButtonOver;
+
+            // Clear unused
+            Destroy(textGo.transform.Find("Text_Valeur").gameObject);
+            Destroy(textGo.transform.Find("ChevronPrev").gameObject);
+            Destroy(textGo.transform.Find("ChevronNext").gameObject);
+
+            return text;
+        }
+
+        /// <summary>
         /// Create a select.
         /// </summary>
         /// <param name="data">Select data</param>
@@ -166,7 +208,7 @@ namespace COSML.Menu
         {
             // Base
             GameObject selectGo = data.parent != null ? Instantiate(selectTemplate, data.parent, false) : Instantiate(selectTemplate);
-            selectGo.name = "Select";
+            selectGo.name = data.name ?? "Select";
             MainMenuSelector select = selectGo.GetComponent<MainMenuSelector>();
             select.menu = data.menu;
             select.buttonId = data.buttonId;
@@ -208,19 +250,20 @@ namespace COSML.Menu
         /// <summary>
         /// Create a toggle.
         /// </summary>
-        /// <param name="options">Toggle options</param>
+        /// <param name="data">Toggle data</param>
         /// <returns></returns>
-        internal static MainMenuSelector CreateToggle(InternalToggleData options)
+        internal static MainMenuSelector CreateToggle(InternalToggleData data)
         {
             MainMenuSelector toggle = CreateSelect(new InternalSelectData
             {
-                parent = options.parent,
-                menu = options.menu,
-                buttonId = options.buttonId,
-                position = options.position,
-                label = options.label,
-                values = new string[2] { options.off ?? "OFF", options.on ?? "ON" },
-                value = options.value ? 1 : 0
+                name = data.name,
+                parent = data.parent,
+                menu = data.menu,
+                buttonId = data.buttonId,
+                position = data.position,
+                label = data.label,
+                values = new string[2] { data.off ?? "OFF", data.on ?? "ON" },
+                value = data.value ? 1 : 0
             });
             toggle.name = "Toggle";
 
@@ -236,7 +279,7 @@ namespace COSML.Menu
         {
             // Base
             GameObject sliderGo = data.parent != null ? Instantiate(sliderTemplate, data.parent, false) : Instantiate(sliderTemplate);
-            sliderGo.name = "Slider";
+            sliderGo.name = data.name ?? "Slider";
             Patches.MainMenuSlider slider = (Patches.MainMenuSlider)sliderGo.GetComponent<MainMenuSlider>();
             slider.menu = data.menu;
             slider.buttonId = data.buttonId;
@@ -264,7 +307,7 @@ namespace COSML.Menu
             Text labelText = labelGo.GetComponent<Text>();
             labelText.text = data.label?.ToUpper() ?? "SLIDER";
             GameObject sliderValueGo = Instantiate(selectTemplate.transform.Find("Text_Valeur").gameObject, sliderGo.transform, false);
-            sliderValueGo.name = "Text_Valeur";
+            sliderValueGo.name = "Value_Text";
             Text sliderValueText = sliderValueGo.GetComponent<Text>();
             sliderValueText.alignment = TextAnchor.MiddleRight;
             float textWidth = FindGreatestWidth(sliderValueText, data.steps);
@@ -298,6 +341,66 @@ namespace COSML.Menu
             slider.SetValues(data.steps.Select(s => s.ToString()).ToArray());
 
             return slider;
+        }
+
+        private static InputButton CreateInputButton(InternalTextData data)
+        {
+            MainMenuText textButton = CreateText(data);
+            InputButton inputButton = textButton.gameObject.AddComponent<InputButton>();
+            inputButton.menu = textButton.menu;
+            inputButton.over = textButton.over;
+            inputButton.overAnimator = textButton.overAnimator;
+            inputButton.Init();
+            Destroy(textButton);
+
+            return inputButton;
+        }
+
+        /// <summary>
+        /// Create a text input.
+        /// </summary>
+        /// <param name="data">Input text data</param>
+        /// <returns></returns>
+        internal static InputButton CreateInputText(InternalInputTextData data)
+        {
+            // Button
+            InputButton button = CreateInputButton(new InternalTextData
+            {
+                name = data.name ?? "InputButton",
+                label = data.label ?? "INPUT",
+                parent = data.parent,
+                menu = data.menu,
+                position = data.position
+            });
+
+            // Input field
+            GameObject inputFieldGo = Instantiate(inputTextTemplate, button.transform, false);
+            Destroy(inputFieldGo.GetComponent<JournalAnnotationText>());
+            inputFieldGo.name = "InputField";
+            inputFieldGo.transform.localPosition = new Vector3(-30, -64, 0);
+            InputField inputField = inputFieldGo.GetComponent<InputField>();
+            inputField.text = data.text ?? "";
+            inputField.characterLimit = data.limit;
+            Text inputText = inputFieldGo.transform.Find("Text").GetComponent<Text>();
+            inputText.alignment = TextAnchor.MiddleLeft;
+            inputText.GetComponent<RectTransform>().sizeDelta = new Vector2(700, 100);
+            button.valueText = inputText;
+            button.input = inputField;
+
+            // Background
+            GameObject background = new("Background");
+            background.transform.SetParent(button.transform, false);
+            Image image = background.AddComponent<Image>();
+            image.sprite = inputButtonBackground;
+            RectTransform rectImage = image.GetComponent<RectTransform>();
+            rectImage.sizeDelta = new Vector2(image.sprite.textureRect.width, image.sprite.textureRect.height);
+            RectTransform rectBackground = image.GetComponent<RectTransform>();
+            rectBackground.sizeDelta = rectImage.sizeDelta;
+            background.transform.localPosition = new Vector3(320, background.transform.localPosition.y, 0);
+            inputFieldGo.transform.SetParent(null, false);
+            inputFieldGo.transform.SetParent(button.transform, false);
+
+            return button;
         }
 
         private static float FindGreatestWidth(Text text, object[] values)
@@ -337,10 +440,23 @@ namespace COSML.Menu
         }
 
         /// <summary>
+        /// A struct representing a menu.
+        /// </summary>
+        internal struct InternalMenuData
+        {
+            internal string name;
+            internal string label;
+            internal AbstractMainMenu parent;
+            internal List<IOptionData> options;
+            internal Action onBack;
+        }
+
+        /// <summary>
         /// A struct representing a button.
         /// </summary>
         internal struct InternalButtonData
         {
+            internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
             internal int buttonId;
@@ -350,10 +466,23 @@ namespace COSML.Menu
         }
 
         /// <summary>
+        /// A struct representing a text.
+        /// </summary>
+        internal struct InternalTextData
+        {
+            internal string name;
+            internal Transform parent;
+            internal AbstractMainMenu menu;
+            internal int position;
+            internal string label;
+        }
+
+        /// <summary>
         /// A struct representing a select.
         /// </summary>
         internal struct InternalSelectData
         {
+            internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
             internal int buttonId;
@@ -368,6 +497,7 @@ namespace COSML.Menu
         /// </summary>
         internal struct InternalToggleData
         {
+            internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
             internal int buttonId;
@@ -383,6 +513,7 @@ namespace COSML.Menu
         /// </summary>
         internal struct InternalSliderData
         {
+            internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
             internal int buttonId;
@@ -393,14 +524,18 @@ namespace COSML.Menu
         }
 
         /// <summary>
-        /// A struct representing a mod menu.
+        /// A struct representing a slider.
         /// </summary>
-        internal struct InternalMenuData
+        internal struct InternalInputTextData
         {
+            internal string name;
+            internal Transform parent;
+            internal AbstractMainMenu menu;
+            internal int buttonId;
+            internal int position;
             internal string label;
-            internal AbstractMainMenu parent;
-            internal List<IOptionData> options;
-            internal Action onBack;
+            internal string text;
+            internal int limit;
         }
 
         /// <summary>
@@ -426,7 +561,7 @@ namespace COSML.Menu
         public interface IOptionData { }
 
         /// <summary>
-        /// A struct representing a mod button.
+        /// A struct representing a button option.
         /// </summary>
         public struct ButtonData : IOptionData
         {
@@ -447,7 +582,20 @@ namespace COSML.Menu
         }
 
         /// <summary>
-        /// A struct representing a mod select.
+        /// A struct representing a text option.
+        /// </summary>
+        public struct TextData : IOptionData
+        {
+            public string label { get; }
+
+            public TextData(string label)
+            {
+                this.label = label;
+            }
+        }
+
+        /// <summary>
+        /// A struct representing a select option.
         /// </summary>
         public struct SelectData : IOptionData
         {
@@ -466,7 +614,7 @@ namespace COSML.Menu
         }
 
         /// <summary>
-        /// A struct representing a mod toggle.
+        /// A struct representing a toggle option.
         /// </summary>
         public struct ToggleData : IOptionData
         {
@@ -491,7 +639,7 @@ namespace COSML.Menu
         }
 
         /// <summary>
-        /// A struct representing a mod slider.
+        /// A struct representing a slider option.
         /// </summary>
         public struct SliderData : IOptionData
         {
@@ -506,6 +654,27 @@ namespace COSML.Menu
                 this.steps = steps;
                 this.value = value;
                 this.onChange = onChange;
+            }
+        }
+
+        /// <summary>
+        /// A struct representing a text input.
+        /// </summary>
+        public struct InputTextData : IOptionData
+        {
+            public string label { get; }
+            public string text { get; }
+            public Action<string> onInput { get; }
+
+            public InputTextData(string label, Action<string> onInput)
+            {
+                this.label = label;
+                this.onInput = onInput;
+            }
+
+            public InputTextData(string label, string text, Action<string> onInput) : this(label, onInput)
+            {
+                this.text = text;
             }
         }
     }

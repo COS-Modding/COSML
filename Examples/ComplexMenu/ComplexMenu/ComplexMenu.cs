@@ -23,23 +23,12 @@ namespace ComplexMenu
 
         public List<IOptionData> GetMenu()
         {
-            MenuData subMenu = new MenuData(
-                "MENU",
-                new List<IOptionData>
-                {
-                    new ButtonData(
-                        "SUBBUTTON",
-                        () => Info("SUBBUTTON clicked!")
-                    )
-                },
-                () => Info("Quitting SUBMENU")
-            );
-
             List<IOptionData> mainMenuOptions = new List<IOptionData> {
                 new ButtonData(
                     "BUTTON",
                     () => Info("BUTTON clicked!")
                 ),
+                new TextData("TEXT"),
                 new SelectData(
                     "SELECT",
                     selectValues,
@@ -59,9 +48,24 @@ namespace ComplexMenu
                     0,
                     (int value) => Info($"SLIDER changed: idx={value}, val={sliderSteps[value]}")
                 ),
+                new InputTextData(
+                    "INPUT TEXT",
+                    "PLACEHOLDER",
+                    (string value) => Info($"INPUT TEXT changed: {value}")
+                ),
                 new ButtonData(
                     "SUBMENU",
-                    subMenu,
+                    new MenuData(
+                        "MENU",
+                        new List<IOptionData>
+                        {
+                            new ButtonData(
+                                "SUBBUTTON",
+                                () => Info("SUBBUTTON clicked!")
+                            )
+                        },
+                        () => Info("Quitting SUBMENU")
+                    ),
                     () => Info("Entering SUBMENU")
                 )
             };

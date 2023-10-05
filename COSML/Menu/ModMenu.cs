@@ -66,6 +66,16 @@ namespace COSML.Menu
                         arrow = hasSubMenu
                     });
                 }
+                else if (modOption is TextData textData)
+                {
+                    option = CreateText(new InternalTextData
+                    {
+                        parent = transform,
+                        menu = this,
+                        position = modIndex,
+                        label = textData.label
+                    });
+                }
                 else if (modOption is SelectData selectData)
                 {
                     option = CreateSelect(new InternalSelectData
@@ -106,6 +116,23 @@ namespace COSML.Menu
                         value = sliderData.value
                     });
                 }
+                else if (modOption is InputTextData inputData)
+                {
+                    InputButton inputText = CreateInputText(new InternalInputTextData
+                    {
+                        parent = transform,
+                        menu = this,
+                        buttonId = modIndex,
+                        position = modIndex,
+                        label = inputData.label,
+                        text = inputData.text
+                    });
+                    option = inputText;
+                    InputButton.ValueChangedHook += (string value) =>
+                    {
+                        inputData.onInput?.Invoke(value);
+                    };
+                }
                 else
                 {
                     continue;
@@ -125,9 +152,19 @@ namespace COSML.Menu
                 foreach (MonoBehaviour option in options.Values)
                 {
                     option.GetComponent<MainMenuButton>()?.Loop();
+                    option.GetComponent<MainMenuText>()?.Loop();
                     option.GetComponent<MainMenuSelector>()?.Loop();
                     option.GetComponent<MainMenuSlider>()?.Loop();
+                    option.GetComponent<InputButton>()?.Loop();
                 }
+            }
+        }
+
+        public void LateLoop()
+        {
+            foreach (MonoBehaviour option in options.Values)
+            {
+                option.GetComponent<JournalAnnotationUI>()?.LateLoop();
             }
         }
 
@@ -141,8 +178,10 @@ namespace COSML.Menu
                 foreach (MonoBehaviour option in options.Values)
                 {
                     option.GetComponent<MainMenuButton>()?.InitRoll();
+                    option.GetComponent<MainMenuText>()?.InitRoll();
                     option.GetComponent<MainMenuSelector>()?.InitRoll();
                     option.GetComponent<MainMenuSlider>()?.InitRoll();
+                    option.GetComponent<InputButton>()?.InitRoll();
                 }
             }
         }
@@ -153,8 +192,10 @@ namespace COSML.Menu
             foreach (MonoBehaviour option in options.Values)
             {
                 option.GetComponent<MainMenuButton>()?.ForceExit();
+                option.GetComponent<MainMenuText>()?.ForceExit();
                 option.GetComponent<MainMenuSelector>()?.ForceExit();
                 option.GetComponent<MainMenuSlider>()?.ForceExit();
+                option.GetComponent<InputButton>()?.ForceExit();
             }
         }
 
@@ -167,10 +208,11 @@ namespace COSML.Menu
                 GameController instance = GameController.GetInstance();
                 UIController uicontroller = instance.GetUIController();
                 MonoBehaviour modOption = options[buttonId];
+                IOptionData optionData = optionsData[buttonId];
 
                 if (modOption is MainMenuButton)
                 {
-                    ButtonData buttonData = (ButtonData)optionsData[buttonId];
+                    ButtonData buttonData = (ButtonData)optionData;
                     instance.PlayGlobalSound("Play_menu_clic", false);
                     if (buttonData.menu.HasValue)
                     {
@@ -183,14 +225,12 @@ namespace COSML.Menu
                 }
                 else if (modOption is MainMenuSelector modSelect)
                 {
-                    if (optionsData[buttonId] is SelectData)
+                    if (optionData is SelectData selectData)
                     {
-                        SelectData selectData = (SelectData)optionsData[buttonId];
                         selectData.onChange(modSelect.GetCurrentValue());
                     }
-                    else if (optionsData[buttonId] is ToggleData)
+                    else if (optionData is ToggleData toggleData)
                     {
-                        ToggleData toggleData = (ToggleData)optionsData[buttonId];
                         toggleData.onChange(modSelect.GetCurrentValue() == 1);
                     }
                 }
@@ -198,16 +238,16 @@ namespace COSML.Menu
                 {
                     if (modSlider.HasUpdated())
                     {
-                        SliderData sliderData = (SliderData)optionsData[buttonId];
+                        SliderData sliderData = (SliderData)optionData;
                         sliderData.onChange(modSlider.GetCurrentValue());
                     }
                 }
             }
-            //else if (buttonId == OPTION_MENU_MAX_PER_PAGE && pageSelector != null)
+            //else if (buttonId == Constants.PAGINATION_BUTTON_ID && pageSelector != null)
             //{
             //    ChangePage(pageSelector.GetCurrentValue() + 1);
             //}
-            else if (buttonId == OPTION_MENU_MAX_PER_PAGE + 1)
+            else if (buttonId == Constants.BACK_BUTTON_ID)
             {
                 GoToPreviousMenu();
             }
@@ -217,6 +257,23 @@ namespace COSML.Menu
 
         public override AbstractUIBrowser GetBrowser()
         {
+            foreach (MonoBehaviour option in options.Values)
+            {
+                InputButton inputButton = option.GetComponent<InputButton>();
+                if (inputButton != null && inputButton.isFocused)
+                {
+                    return new UIBrowser(
+                        GetBrowserId(),
+                        new OverableUI[][]
+                        {
+                            new OverableUI[1] { inputButton.over }
+                        },
+                        0,
+                        0
+                    );
+                }
+            }
+
             if (browser != null) return browser;
 
             //int buttonsCount = pages[currentPageNumber].transform.childCount;
@@ -228,8 +285,17 @@ namespace COSML.Menu
             foreach (MonoBehaviour option in options.Values)
             {
                 OverableUI optionOver = option.GetComponent<MainMenuButton>();
+                optionOver ??= option.GetComponent<MainMenuText>()?.over;
                 optionOver ??= option.GetComponent<MainMenuSelector>()?.over;
                 optionOver ??= option.GetComponent<MainMenuSlider>()?.over;
+                optionOver ??= option.GetComponent<InputButton>()?.over;
+
+                //Patches.JournalAnnotationUI inputText = option.GetComponent<Patches.JournalAnnotationUI>();
+                //if (inputText != null)
+                //{
+                //    optionOver = inputText.button;
+                //}
+
                 overableUIs[optionIndex] = new OverableUI[1] { optionOver };
                 optionIndex++;
             }

@@ -19,6 +19,17 @@ namespace COSML.Patches
         [MonoModIgnore]
         public new PauseMenu pauseMenu;
 
+        [MonoModIgnore]
+        private AbstractMainMenu currentMenu;
+        [MonoModIgnore]
+        private bool waitMaskHide;
+        [MonoModIgnore]
+        private bool isDisplayed;
+        [MonoModIgnore]
+        private Animator animator;
+        [MonoModIgnore]
+        private float clicMaskSkipTimeLeft;
+
         public extern void orig_Init();
         public new void Init()
         {
@@ -60,6 +71,77 @@ namespace COSML.Patches
             catch (Exception ex)
             {
                 Logging.API.Error($"Error creating mod menu:\n" + ex);
+            }
+        }
+
+        public new void Loop()
+        {
+            if (gameObject.activeSelf)
+            {
+                if (waitMaskHide)
+                {
+                    if (!initMask.activeSelf && pressButton.activeSelf)
+                    {
+                        GameController instance = (GameController)GameController.GetInstance();
+                        InputsController startInputsController = instance.GetInputsController().GetStartInputsController();
+                        if (startInputsController != null)
+                        {
+                            animator.enabled = false;
+                            startInputsController.DisplayCursor(true);
+                            instance.ChangeInputController(startInputsController);
+                            waitMaskHide = false;
+                            isDisplayed = true;
+                            copyright.color = new Color(copyright.color.r, copyright.color.g, copyright.color.b, 1f);
+                            pressButton.SetActive(false);
+                            if (instance.GetPlateformController().IsEulaAccepted())
+                            {
+                                currentMenu.Show(null);
+                            }
+                            else
+                            {
+                                currentMenu = null;
+                                Swap(eulaMenu, true);
+                            }
+                            instance.PlayGlobalSound("Play_menu_clic", false);
+                        }
+                    }
+                }
+                else
+                {
+                    InputsController inputsController = global::GameController.GetInstance().GetInputsController();
+                    InputsController.ControllerType controllerType = inputsController.GetControllerType();
+                    if (currentMenu != null)
+                    {
+                        currentMenu.Loop();
+                    }
+                    padIndics.gameObject.SetActive(currentMenu != null && !currentMenu.GetType().Equals(typeof(RootMainMenu)) && !currentMenu.GetType().Equals(typeof(EulaMenu)) && controllerType > InputsController.ControllerType.MOUSE);
+                    if (padIndics.gameObject.activeSelf)
+                    {
+                        OverableUI overUI = inputsController.GetOverUI();
+                        bool active = overUI != null && !overUI.GetType().Equals(typeof(MainMenuSelectorOver)) && !overUI.GetType().Equals(typeof(MainMenuTextOver));
+                        validLabel.gameObject.SetActive(active);
+                        validPicto.gameObject.SetActive(active);
+                        validPicto.sprite = validSprites[(int)controllerType];
+                        cancelPicto.sprite = cancelSprites[(int)controllerType];
+                    }
+                    if (controllerType == InputsController.ControllerType.MOUSE)
+                    {
+                        if (clicMask.gameObject.activeSelf)
+                        {
+                            clicMaskSkipTimeLeft -= Time.deltaTime;
+                            if (clicMaskSkipTimeLeft <= 0f)
+                            {
+                                clicMask.gameObject.SetActive(false);
+                            }
+                        }
+                    }
+                    else if (!clicMask.gameObject.activeSelf)
+                    {
+                        clicMask.gameObject.SetActive(true);
+                        clicMaskSkipTimeLeft = clicMaskSkipTime;
+                    }
+                }
+                demoBar.Loop();
             }
         }
     }

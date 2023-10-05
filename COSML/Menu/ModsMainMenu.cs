@@ -90,6 +90,7 @@ namespace COSML.Menu
         {
             int buttonId = (modOrder - 1) % OPTION_MENU_MAX_PER_PAGE;
             MonoBehaviour modButton;
+            string label = $"{modInst.Name} - {modInst.Mod.GetVersionSafe("???")}";
             try
             {
                 if (modInst.Mod is IModTogglable && modInst.Mod is not IModMenu)
@@ -100,11 +101,11 @@ namespace COSML.Menu
                         menu = this,
                         buttonId = buttonId,
                         position = buttonId,
-                        label = $"{modInst.Name} - {modInst.Mod.GetVersionSafe("???")}",
+                        label = label,
                         value = modInst.Enabled,
                     });
                 }
-                else
+                else if (modInst.Mod is IModMenu)
                 {
                     modButton = CreateButton(new InternalButtonData
                     {
@@ -112,8 +113,17 @@ namespace COSML.Menu
                         menu = this,
                         buttonId = buttonId,
                         position = buttonId,
-                        label = $"{modInst.Name} - {modInst.Mod.GetVersionSafe("???")}",
-                        arrow = modInst.Mod is IModMenu
+                        label = label
+                    });
+                }
+                else
+                {
+                    modButton = CreateText(new InternalTextData
+                    {
+                        parent = parent,
+                        menu = this,
+                        position = buttonId,
+                        label = label
                     });
                 }
 
@@ -168,8 +178,8 @@ namespace COSML.Menu
                     foreach (Transform mod in pages[currentPageNumber].transform)
                     {
                         mod.GetComponent<MainMenuButton>()?.Loop();
+                        mod.GetComponent<MainMenuText>()?.Loop();
                         mod.GetComponent<MainMenuSelector>()?.Loop();
-                        mod.GetComponent<MainMenuSlider>()?.Loop();
                     }
                 }
             }
@@ -193,8 +203,8 @@ namespace COSML.Menu
                     foreach (Transform mod in pages[currentPageNumber].transform)
                     {
                         mod.GetComponent<MainMenuButton>()?.InitRoll();
+                        mod.GetComponent<MainMenuText>()?.InitRoll();
                         mod.GetComponent<MainMenuSelector>()?.InitRoll();
-                        mod.GetComponent<MainMenuSlider>()?.InitRoll();
                     }
                 }
 
@@ -211,16 +221,14 @@ namespace COSML.Menu
                 foreach (Transform mod in pages[currentPageNumber].transform)
                 {
                     mod.GetComponent<MainMenuButton>()?.ForceExit();
+                    mod.GetComponent<MainMenuText>()?.ForceExit();
                     mod.GetComponent<MainMenuSelector>()?.ForceExit();
-                    mod.GetComponent<MainMenuSlider>()?.ForceExit();
                 }
             }
         }
 
         public override void OnClic(int buttonId)
         {
-            if (buttonId < 0) return;
-
             GameController instance = GameController.GetInstance();
             UIController uicontroller = instance.GetUIController();
 
@@ -238,11 +246,11 @@ namespace COSML.Menu
                     else LoadMod(modInst);
                 }
             }
-            else if (buttonId == OPTION_MENU_MAX_PER_PAGE && pageSelector != null)
+            else if (buttonId == Constants.PAGINATION_BUTTON_ID && pageSelector != null)
             {
                 ChangePage(pageSelector.GetCurrentValue() + 1);
             }
-            else if (buttonId == OPTION_MENU_MAX_PER_PAGE + 1)
+            else if (buttonId == Constants.BACK_BUTTON_ID)
             {
                 GoToPreviousMenu();
             }
@@ -278,8 +286,8 @@ namespace COSML.Menu
             foreach (Transform btn in pages[currentPageNumber].transform)
             {
                 OverableUI btnOver = btn.GetComponent<MainMenuButton>();
+                btnOver ??= btn.GetComponent<MainMenuText>()?.over;
                 btnOver ??= btn.GetComponent<MainMenuSelector>()?.over;
-                btnOver ??= btn.GetComponent<MainMenuSlider>()?.over;
                 overableUIs[btnIndex] = new OverableUI[1] { btnOver };
                 btnIndex++;
             }
