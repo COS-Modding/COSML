@@ -46,7 +46,7 @@ namespace COSML.Patches
 
             if (valueText != null && values != null)
             {
-                valueText.text = values[currentValue].ToUpper();
+                valueText.text = values[currentValue];
             }
         }
 

@@ -17,7 +17,7 @@ namespace COSML.Menu
         public const float OPTION_MENU_HEIGHT = 120;
         public const float OPTION_MENU_MIN_Y = 404;
 
-        public const float CHEVRON_MARGIN = 128;
+        public const float CHEVRON_MARGIN = 96;
 
         public static GameObject menuTemplate;
         public static GameObject rootButtonTemplate;
@@ -214,7 +214,6 @@ namespace COSML.Menu
             select.buttonId = data.buttonId;
             select.transform.localPosition = GetOptionButtonLocalPosition(data.position);
             data.values ??= new string[0];
-            data.values = data.values.Select(v => v.ToUpper()).ToArray();
             select.SetValues(data.values, I18nType.ENGLISH, true);
 
             // Chevrons
@@ -312,7 +311,7 @@ namespace COSML.Menu
             sliderValueText.alignment = TextAnchor.MiddleRight;
             float textWidth = FindGreatestWidth(sliderValueText, data.steps);
             float chevronPrevX = chevronPrevGo.transform.localPosition.x;
-            sliderValueGo.transform.localPosition = new Vector3(chevronPrevX - textWidth / 2 - CHEVRON_MARGIN / 1.5f, sliderValueGo.transform.localPosition.y, 0);
+            sliderValueGo.transform.localPosition = new Vector3(-CHEVRON_MARGIN - 32, sliderValueGo.transform.localPosition.y, 0);
             slider.valueText = sliderValueText;
             slider.Init(data.value);
 
