@@ -1,8 +1,10 @@
 ﻿using COSML.Modding;
+using System.Collections.Generic;
+using static COSML.Menu.MenuUtils;
 
 namespace FlappiBirdTweaks
 {
-    public class FlappiBirdTweaks : Mod, ILocalSettings<LocalData>, IModTogglable
+    public class FlappiBirdTweaks : Mod, ILocalSettings<LocalData>, IModTogglable, IModMenu
     {
         private GlobalData globalData = new GlobalData();
         private LocalData localData = new LocalData();
@@ -18,6 +20,8 @@ namespace FlappiBirdTweaks
         private float orig_upSpeed;
         private float orig_downSpeed;
         private FlappiBirdPuzzle instance;
+        private float[] speedValues = new float[] { 0.25f, 0.5f, 0.75f, 1f, 2f, 4f, 8f };
+        private object[] speedSteps = new object[] { "x¼", "x½", "x¾", "x1", "x2", "x4", "x8" };
 
         public override void Init()
         {
@@ -40,8 +44,8 @@ namespace FlappiBirdTweaks
             orig_downSpeed = self.downSpeed;
 
             Info("Set new speed values");
-            self.upSpeed = localData.upSpeed;
-            self.downSpeed = localData.downSpeed;
+            self.upSpeed *= speedValues[localData.upSpeed];
+            self.downSpeed *= speedValues[localData.downSpeed];
         }
 
         public void Unload()
@@ -55,6 +59,44 @@ namespace FlappiBirdTweaks
                 instance.upSpeed = orig_upSpeed;
                 instance.downSpeed = orig_downSpeed;
             }
+        }
+
+        private void UpdateSpeed(bool up, int newIndex)
+        {
+            if (up)
+            {
+                localData.upSpeed = newIndex;
+                if (instance != null)
+                {
+                    instance.upSpeed = orig_upSpeed * speedValues[newIndex];
+                }
+            }
+            else
+            {
+                localData.downSpeed = newIndex;
+                if (instance != null)
+                {
+                    instance.downSpeed = orig_downSpeed * speedValues[newIndex];
+                }
+            }
+        }
+
+        public List<IOptionData> GetMenu()
+        {
+            return new List<IOptionData> {
+                new SliderData(
+                    "Up speed",
+                    speedSteps,
+                    localData.upSpeed,
+                    (newIndex) => UpdateSpeed(true, newIndex)
+                ),
+                new SliderData(
+                    "Down speed",
+                    speedSteps,
+                    localData.downSpeed,
+                    (newIndex) => UpdateSpeed(false, newIndex)
+                )
+            };
         }
     }
 }
