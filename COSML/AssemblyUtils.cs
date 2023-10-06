@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -28,7 +27,8 @@ namespace COSML
             texture.LoadImage(buffer, true);
 
             Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f, pixelsPerUnit);
-            sprite.name = path.Split('.').Last();
+            string[] words = path.Split('.');
+            sprite.name = words[words.Length - 2];
             return sprite;
         }
     }

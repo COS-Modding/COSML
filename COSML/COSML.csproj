@@ -31,7 +31,8 @@
     </ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="Resources/InputButtonBackground.png"/>
+		<EmbeddedResource Include="Resources/InputButton_background.png"/>
+		<EmbeddedResource Include="Resources/MainMenu_chevron_over_white.png"/>
 	</ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
@@ -120,6 +121,12 @@
         </Reference>
         <Reference Include="UnityEngine.ImageConversionModule">
             <HintPath>$(VanillaDir)\UnityEngine.ImageConversionModule.dll</HintPath>
+        </Reference>
+        <Reference Include="Rewired_Core">
+            <HintPath>$(VanillaDir)\Rewired_Core.dll</HintPath>
+        </Reference>
+        <Reference Include="Rewired_Windows">
+            <HintPath>$(VanillaDir)\Rewired_Windows.dll</HintPath>
         </Reference>
     </ItemGroup>
 </Project>

@@ -1,7 +1,8 @@
+#pragma warning disable 649
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using static UnityEngine.Object;
@@ -25,8 +26,6 @@ namespace COSML.Menu
         public static GameObject selectTemplate;
         public static GameObject sliderTemplate;
         public static GameObject inputTextTemplate;
-
-        private static Sprite inputButtonBackground;
 
         private static bool cloned = false;
 
@@ -58,9 +57,6 @@ namespace COSML.Menu
             // Input text
             inputTextTemplate = Instantiate(GameObject.Find($"{Constants.GLOBAL_CANVAS_PATH}/AnnotationUI/popup/InputField/"), templates.transform, false);
             inputTextTemplate.name = "InputText";
-
-            // Load images
-            inputButtonBackground = Assembly.GetExecutingAssembly().LoadEmbeddedSprite("COSML.Resources.InputButtonBackground.png", 256f);
 
             cloned = true;
         }
@@ -213,7 +209,7 @@ namespace COSML.Menu
             select.menu = data.menu;
             select.buttonId = data.buttonId;
             select.transform.localPosition = GetOptionButtonLocalPosition(data.position);
-            data.values ??= new string[0];
+            data.values ??= new string[1] { "" };
             select.SetValues(data.values, I18nType.ENGLISH, true);
 
             // Chevrons
@@ -342,28 +338,15 @@ namespace COSML.Menu
             return slider;
         }
 
-        private static InputButton CreateInputButton(InternalTextData data)
-        {
-            MainMenuText textButton = CreateText(data);
-            InputButton inputButton = textButton.gameObject.AddComponent<InputButton>();
-            inputButton.menu = textButton.menu;
-            inputButton.over = textButton.over;
-            inputButton.overAnimator = textButton.overAnimator;
-            inputButton.Init();
-            Destroy(textButton);
-
-            return inputButton;
-        }
-
         /// <summary>
         /// Create a text input.
         /// </summary>
         /// <param name="data">Input text data</param>
         /// <returns></returns>
-        internal static InputButton CreateInputText(InternalInputTextData data)
+        internal static MainMenuInputButton CreateInputText(InternalInputTextData data)
         {
             // Button
-            InputButton button = CreateInputButton(new InternalTextData
+            MainMenuText textButton = CreateText(new InternalTextData
             {
                 name = data.name ?? "InputButton",
                 label = data.label ?? "INPUT",
@@ -371,9 +354,14 @@ namespace COSML.Menu
                 menu = data.menu,
                 position = data.position
             });
+            MainMenuInputButton inputButton = textButton.gameObject.AddComponent<MainMenuInputButton>();
+            inputButton.menu = textButton.menu;
+            inputButton.over = inputButton.gameObject.AddComponent<MainMenuInputButtonOver>();
+            inputButton.overAnimator = textButton.overAnimator;
+            Destroy(textButton);
 
             // Input field
-            GameObject inputFieldGo = Instantiate(inputTextTemplate, button.transform, false);
+            GameObject inputFieldGo = Instantiate(inputTextTemplate, inputButton.transform, false);
             Destroy(inputFieldGo.GetComponent<JournalAnnotationText>());
             inputFieldGo.name = "InputField";
             inputFieldGo.transform.localPosition = new Vector3(-30, -64, 0);
@@ -383,23 +371,30 @@ namespace COSML.Menu
             Text inputText = inputFieldGo.transform.Find("Text").GetComponent<Text>();
             inputText.alignment = TextAnchor.MiddleLeft;
             inputText.GetComponent<RectTransform>().sizeDelta = new Vector2(700, 100);
-            button.valueText = inputText;
-            button.input = inputField;
+            inputButton.valueText = inputText;
+            inputButton.input = inputField;
+
+            // Collider
+            GameObject colliderGo = inputButton.transform.Find("Collider").gameObject;
+            inputButton.inputOver = colliderGo.AddComponent<MainMenuInputButtonOver>();
+            Destroy(colliderGo.GetComponent<MainMenuTextOver>());
 
             // Background
             GameObject background = new("Background");
-            background.transform.SetParent(button.transform, false);
+            background.transform.SetParent(inputButton.transform, false);
             Image image = background.AddComponent<Image>();
-            image.sprite = inputButtonBackground;
+            image.sprite = MenuResources.InputButtonBackground;
             RectTransform rectImage = image.GetComponent<RectTransform>();
             rectImage.sizeDelta = new Vector2(image.sprite.textureRect.width, image.sprite.textureRect.height);
             RectTransform rectBackground = image.GetComponent<RectTransform>();
             rectBackground.sizeDelta = rectImage.sizeDelta;
             background.transform.localPosition = new Vector3(320, background.transform.localPosition.y, 0);
             inputFieldGo.transform.SetParent(null, false);
-            inputFieldGo.transform.SetParent(button.transform, false);
+            inputFieldGo.transform.SetParent(inputButton.transform, false);
 
-            return button;
+            inputButton.Init();
+
+            return inputButton;
         }
 
         private static float FindGreatestWidth(Text text, object[] values)

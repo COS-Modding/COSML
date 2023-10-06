@@ -1,11 +1,18 @@
-﻿using UnityEngine;
+﻿using COSML.Log;
+using System;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace COSML.Menu
 {
-    public class MainMenuText : MonoBehaviour
+    public class MainMenuInputButton : MonoBehaviour
     {
         public AbstractMainMenu menu;
-        public MainMenuTextOver over;
+        public InputField input;
+        public Text valueText;
+        public MainMenuInputButtonOver over;
+        public MainMenuInputButtonOver inputOver;
         public Animator overAnimator;
 
         protected bool onOver;
@@ -13,22 +20,26 @@ namespace COSML.Menu
         public void Init()
         {
             over.Init(this);
+            inputOver.Init(this);
+            input.onValueChanged.AddListener(OnValueChanged);
         }
 
         public void InitRoll()
         {
             over.InitRoll();
+            inputOver.InitRoll();
             onOver = false;
         }
 
         public void ForceExit()
         {
             over.ForceExit();
+            inputOver.ForceExit();
         }
 
         public void Loop()
         {
-            if (over.IsOver())
+            if (over.IsOver() || inputOver.IsOver())
             {
                 if (!onOver)
                 {
@@ -51,14 +62,34 @@ namespace COSML.Menu
         {
             return onOver;
         }
+
+        public static event Action<string> ValueChangedHook;
+        internal static void OnValueChanged(string text)
+        {
+            if (ValueChangedHook == null) return;
+
+            Delegate[] invocationList = ValueChangedHook.GetInvocationList();
+            foreach (Action<string> toInvoke in invocationList.Cast<Action<string>>())
+            {
+                try
+                {
+                    toInvoke.Invoke(text);
+                }
+                catch (Exception ex)
+                {
+                    Logging.API.Error(ex);
+                }
+            }
+        }
+
     }
 
-    public class MainMenuTextOver : PointableUI, OverableUI, OverableInteractive
+    public class MainMenuInputButtonOver : PointableUI, OverableUI, OverableInteractive
     {
-        private MainMenuText selector;
+        private MainMenuInputButton selector;
         private bool isOver;
 
-        public void Init(MainMenuText newSelector)
+        public void Init(MainMenuInputButton newSelector)
         {
             selector = newSelector;
             InitRoll();
@@ -117,7 +148,7 @@ namespace COSML.Menu
                 instance.GetInputsController().EnterUI(this);
                 if (!selector.IsOver())
                 {
-                    instance.PlayGlobalSound("Play_menu_hover", isOver: true);
+                    instance.PlayGlobalSound("Play_menu_hover", true);
                 }
             }
 

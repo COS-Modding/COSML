@@ -1,3 +1,5 @@
+#pragma warning disable 649, 414
+
 using COSML.Log;
 using COSML.Menu;
 using MonoMod;
@@ -118,7 +120,7 @@ namespace COSML.Patches
                     if (padIndics.gameObject.activeSelf)
                     {
                         OverableUI overUI = inputsController.GetOverUI();
-                        bool active = overUI != null && !overUI.GetType().Equals(typeof(MainMenuSelectorOver)) && !overUI.GetType().Equals(typeof(MainMenuTextOver));
+                        bool active = overUI != null && !overUI.GetType().Equals(typeof(MainMenuSelectorOver)) && !overUI.GetType().Equals(typeof(MainMenuTextOver)) && !overUI.GetType().Equals(typeof(MainMenuInputButtonOver));
                         validLabel.gameObject.SetActive(active);
                         validPicto.gameObject.SetActive(active);
                         validPicto.sprite = validSprites[(int)controllerType];
