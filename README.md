@@ -5,7 +5,9 @@ A Chants Of Sennaar mod loader, using [MonoMod](https://github.com/MonoMod/MonoM
 
 If you're a mod developer, there are [examples](https://github.com/COS-Modding/COSML/tree/main/Examples) in the repo.
 
-Feel free to join the [modding discord server](https://discord.com/invite/CKJuZKpSk).
+Useful links
+=======
+All sprites of the game: https://drive.google.com/drive/folders/1ISNfrq57yj26VVAu6vrk9cHR6tlRqGDr?usp=sharing
 
 Build
 =======
