@@ -9,7 +9,7 @@ How to install
 =======
 1. Download COSML in the [releases](https://github.com/COS-Modding/COSML/releases/latest).
 2. Unzip the content in your game folder: `Chants of Sennaar\Chants Of Sennaar_Data\Managed`.
-3. Create manually a folder named `Mods` and put your mods here. Mods must be within a folder named after it (ex: `Mods\My Mod\MyMod.dll`).
+3. Create manually a folder named `Mods` and put your mods in this folder (ex: `Mods\My Mod\MyMod.dll`).
 4. Launch the game and enjoy!
 
 To uninstall COSML, do `Verify integrity of game files...` on the game's property on Steam.
