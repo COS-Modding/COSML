@@ -5,7 +5,20 @@ A Chants Of Sennaar mod loader, using [MonoMod](https://github.com/MonoMod/MonoM
 
 If you're a mod developer, there are [examples](https://github.com/COS-Modding/COSML/tree/main/Examples) in the repo.
 
-Feel free to join the [modding discord server](https://discord.com/invite/CKJuZKpSk).
+Feel free to join the [modding discord server](https://discord.com/invite/cPsYmn7pdj).
+
+How to install
+=======
+1. Download COSML in the [releases](https://github.com/COS-Modding/COSML/releases/latest).
+2. Unzip the content in your game folder: `Chants of Sennaar\Chants Of Sennaar_Data\Managed`.
+3. Create manually a folder named `Mods` and put your mods in this folder (ex: `Mods\My Mod\MyMod.dll`).
+4. Launch the game and enjoy!
+
+To uninstall COSML, do `Verify integrity of game files...` on the game's property on Steam.
+
+Useful links
+=======
+All sprites of the game: https://drive.google.com/drive/folders/1ISNfrq57yj26VVAu6vrk9cHR6tlRqGDr?usp=sharing
 
 Build
 =======
