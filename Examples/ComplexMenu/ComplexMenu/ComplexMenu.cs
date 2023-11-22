@@ -4,7 +4,7 @@ using static COSML.Menu.MenuUtils;
 
 namespace ComplexMenu
 {
-    public class ComplexMenu : Mod, IModTogglable, IModMenu
+    public class ComplexMenu : Mod, IModMenu
     {
         public ComplexMenu() : base("Complex Menu") { }
         public override string GetVersion() => "1.0.0";
@@ -15,10 +15,6 @@ namespace ComplexMenu
         public override void Init()
         {
             Info("Mod init!");
-        }
-        public void Unload()
-        {
-            Info("Mod unload!");
         }
 
         public List<IOptionData> GetMenu()

@@ -16,25 +16,36 @@ namespace FlappiBirdTweaks
         public void OnLoadLocal(LocalData data) => localData = data;
         public LocalData OnSaveLocal() => localData;
 
-        private bool loaded;
+        // Instance of the puzzle to edit values
+        private FlappiBirdPuzzle instance;
+
+
+        // Copies of the orginal values of the bird speed, for unloading
         private float orig_upSpeed;
         private float orig_downSpeed;
-        private FlappiBirdPuzzle instance;
+
+        // Differents speeds of the bird
         private float[] speedValues = new float[] { 0.25f, 0.5f, 0.75f, 1f, 2f, 4f, 8f };
         private object[] speedSteps = new object[] { "x¼", "x½", "x¾", "x1", "x2", "x4", "x8" };
+
+        private bool loaded;
 
         public override void Init()
         {
             Info("Loaded FlappiBirdTweaks");
 
             loaded = false;
+
+            // Hook of the puzzle loop function
             On.FlappiBirdPuzzle.Loop += FlappiBirdLoop;
         }
 
         private void FlappiBirdLoop(On.FlappiBirdPuzzle.orig_Loop orig, FlappiBirdPuzzle self)
         {
+            // Call the original function to keep the function logic
             orig(self);
 
+            // As we are in the Loop function, we must edit values once
             if (loaded) return;
             loaded = true;
 
@@ -83,6 +94,7 @@ namespace FlappiBirdTweaks
 
         public List<IOptionData> GetMenu()
         {
+            // Mod menu to easily edit values
             return new List<IOptionData> {
                 new SliderData(
                     "Up speed",
