@@ -17,11 +17,6 @@ namespace COSML.Modding
         private static COSMLConsole _console;
 
         /// <summary>
-        /// Version of COSML.
-        /// </summary>
-        public static string COSMLVersion;
-
-        /// <summary>
         /// Version of the game.
         /// </summary>
         public static string GameVersion = Application.version;

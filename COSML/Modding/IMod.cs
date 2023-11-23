@@ -1,8 +1,5 @@
 using COSML.Log;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace COSML.Modding
 {
@@ -19,22 +16,9 @@ namespace COSML.Modding
         string GetName();
 
         /// <summary>
-        /// Returns the objects to preload in order for the mod to work.
-        /// </summary>
-        /// <returns>A List of tuples containing scene name, object name</returns>
-        List<(string, string)> GetPreloadNames();
-
-        /// <summary>
-        /// A list of requested scenes to be preloaded and actions to execute on loading of those scenes
-        /// </summary>
-        /// <returns>List of tuples containg scene names and the respective actions.</returns>
-        (string, Func<IEnumerator>)[] PreloadSceneHooks();
-
-        /// <summary>
         /// Called after preloading of all mods.
         /// </summary>
-        /// <param name="preloadedObjects">The preloaded objects relevant to this <see cref="Mod" /></param>
-        void Init(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects);
+        void Init();
 
         /// <summary>
         /// Returns version of Mod

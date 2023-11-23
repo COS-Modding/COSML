@@ -8,9 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UObject = UnityEngine.Object;
-using USceneManager = UnityEngine.SceneManagement.SceneManager;
 
 namespace COSML
 {
@@ -28,7 +26,7 @@ namespace COSML
             Loaded = 4,
         }
 
-        public const int Version = 1;
+        public const int Version = 2;
 
         public static ModLoadState LoadState = ModLoadState.NotStarted;
 
@@ -73,13 +71,13 @@ namespace COSML
             {
                 Logging.InitializeFileStream();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
                 // We can still log to the console at least, if that's enabled.
-                Logging.API.Error(ex);
+                Debug.Log($"Error while initializing ModLog.txt: {e}");
             }
 
-            Logging.API.Info($"Mod loader: {ModHooks.COSMLVersion}");
+            Logging.API.Info($"Mod loader: {Version}");
             Logging.API.Info("Starting mod loading");
 
             string managed_path = SystemInfo.operatingSystemFamily switch
@@ -99,15 +97,12 @@ namespace COSML
             }
 
             ModHooks.LoadGlobalSettings();
-            Logging.ClearOldModlogs();
 
             Logging.API.Debug($"Loading assemblies and constructing mods");
 
+            Directory.CreateDirectory("Mods");
             string mods = Path.Combine(managed_path, "Mods");
-            string[] files = Directory.GetDirectories(mods)
-                .Except(new string[] { Path.Combine(mods, "Disabled") })
-                .SelectMany(d => Directory.GetFiles(d, "*.dll"))
-                .ToArray();
+            string[] files = Directory.GetFiles(mods, "*.dll");
 
             Logging.API.Debug($"DLL files: {string.Join(",\n", files)}");
 
@@ -224,34 +219,9 @@ namespace COSML
                 }
             }
 
-            var scenes = new List<string>();
-            for (int i = 0; i < USceneManager.sceneCountInBuildSettings; i++)
-            {
-                string scenePath = SceneUtility.GetScenePathByBuildIndex(i);
-                scenes.Add(Path.GetFileNameWithoutExtension(scenePath));
-            }
-
             ModInstance[] orderedMods = ModInstanceTypeMap.Values
                 .OrderBy(x => x.Mod?.LoadPriority() ?? 0)
                 .ToArray();
-
-            // dict<scene name, list<(mod, list<objectNames>)>
-            var toPreload = new Dictionary<string, List<(ModInstance, List<string> objectNames)>>();
-            // dict<mod, dict<scene, dict<objName, object>>>
-            var preloadedObjects = new Dictionary<ModInstance, Dictionary<string, Dictionary<string, GameObject>>>();
-            // scene -> respective hooks
-            var sceneHooks = new Dictionary<string, List<Func<IEnumerator>>>();
-
-            Logging.API.Info("Creating mod preloads");
-
-            // Setup dict of scene preloads
-            GetPreloads(orderedMods, scenes, toPreload, sceneHooks);
-
-            if (toPreload.Count > 0 || sceneHooks.Count > 0)
-            {
-                Preloader pld = coroutineHolder.GetComponent<Preloader>() ?? coroutineHolder.AddComponent<Preloader>();
-                yield return pld.Preload(toPreload, preloadedObjects, sceneHooks);
-            }
 
             foreach (ModInstance mod in orderedMods)
             {
@@ -263,8 +233,7 @@ namespace COSML
 
                 try
                 {
-                    preloadedObjects.TryGetValue(mod, out Dictionary<string, Dictionary<string, GameObject>> preloads);
-                    LoadMod(mod, false, preloads);
+                    LoadMod(mod, false);
                     if (!ModHooks.GlobalSettings.ModEnabledSettings.TryGetValue(mod.Name, out var enabled))
                     {
                         enabled = true;
@@ -287,97 +256,6 @@ namespace COSML
             LoadState |= ModLoadState.Loaded;
 
             UObject.Destroy(coroutineHolder.gameObject);
-        }
-
-        private static void GetPreloads
-        (
-            ModInstance[] orderedMods,
-            List<string> scenes,
-            Dictionary<string, List<(ModInstance, List<string> objectNames)>> toPreload,
-            Dictionary<string, List<Func<IEnumerator>>> sceneHooks
-        )
-        {
-            foreach (var mod in orderedMods)
-            {
-                if (mod.Error != null)
-                {
-                    continue;
-                }
-
-                Logging.API.Debug($"Checking preloads for mod \"{mod.Mod.GetName()}\"");
-
-                List<(string, string)> preloadNames = null;
-                try
-                {
-                    preloadNames = mod.Mod.GetPreloadNames();
-                }
-                catch (Exception ex)
-                {
-                    Logging.API.Error($"Error getting preload names for mod {mod.Name}:\n" + ex);
-                }
-
-                try
-                {
-                    foreach (var (scene, hook) in mod.Mod.PreloadSceneHooks())
-                    {
-                        if (!sceneHooks.TryGetValue(scene, out var hooks))
-                            sceneHooks[scene] = hooks = new List<Func<IEnumerator>>();
-
-                        hooks.Add(hook);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logging.API.Error($"Error getting preload hooks for mod {mod.Name}:\n" + ex);
-                }
-
-                if (preloadNames == null)
-                    continue;
-
-                // dict<scene, list<objects>>
-                Dictionary<string, List<string>> modPreloads = new();
-
-                foreach ((string scene, string obj) in preloadNames)
-                {
-                    if (string.IsNullOrEmpty(scene) || string.IsNullOrEmpty(obj))
-                    {
-                        Logging.API.Warn($"Mod `{mod.Mod.GetName()}` passed null values to preload");
-                        continue;
-                    }
-
-                    if (!scenes.Contains(scene))
-                    {
-                        Logging.API.Warn(
-                            $"Mod `{mod.Mod.GetName()}` attempted preload from non-existent scene `{scene}`"
-                        );
-                        continue;
-                    }
-
-                    if (!modPreloads.TryGetValue(scene, out List<string> objects))
-                    {
-                        objects = new List<string>();
-                        modPreloads[scene] = objects;
-                    }
-
-                    Logging.API.Debug($"Found object `{scene}.{obj}`");
-
-                    objects.Add(obj);
-                }
-
-                foreach ((string scene, List<string> objects) in modPreloads)
-                {
-                    if (!toPreload.TryGetValue(scene, out List<(ModInstance, List<string>)> scenePreloads))
-                    {
-                        scenePreloads = new List<(ModInstance, List<string>)>();
-                        toPreload[scene] = scenePreloads;
-                    }
-
-                    Logging.API.Debug($"`{mod.Name}` preloads {objects.Count} objects in the `{scene}` scene");
-
-                    scenePreloads.Add((mod, objects));
-                    toPreload[scene] = scenePreloads;
-                }
-            }
         }
 
         private static string UpdateModText()
@@ -418,8 +296,7 @@ namespace COSML
         internal static void LoadMod
         (
             ModInstance mod,
-            bool updateModText = true,
-            Dictionary<string, Dictionary<string, GameObject>> preloadedObjects = null
+            bool updateModText = true
         )
         {
             try
@@ -427,7 +304,7 @@ namespace COSML
                 if (mod is { Enabled: false, Error: null })
                 {
                     mod.Enabled = true;
-                    mod.Mod.Init(preloadedObjects);
+                    mod.Mod.Init();
                 }
             }
             catch (Exception ex)
