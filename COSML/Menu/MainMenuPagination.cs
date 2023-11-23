@@ -37,6 +37,7 @@ namespace COSML.Menu
             }
 
             element.transform.SetParent(lastPage.transform, false);
+            pageSelector.gameObject.SetActive(pages.Count > 1);
         }
 
         public void InitRoll()
