@@ -53,6 +53,7 @@ namespace COSML
             textPanelGo = new("ConsoleText");
             textPanelGo.transform.SetParent(overlayCanvasGo.transform, false);
             Text text = textPanelGo.AddComponent<Text>();
+            text.text = string.Join(string.Empty, messages.ToArray());
             text.font = font;
             text.fontSize = fontSize;
             text.fontStyle = FontStyle.Normal;
@@ -141,7 +142,6 @@ namespace COSML
             {
                 messages.RemoveAt(0);
             }
-
 
             if (textPanelGo != null)
             {

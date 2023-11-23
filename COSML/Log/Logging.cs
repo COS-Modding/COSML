@@ -1,8 +1,6 @@
 using COSML.Modding;
 using System;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -21,7 +19,7 @@ namespace COSML.Log
         private static bool _shortLoggingLevel;
         private static bool _includeTimestamps;
 
-        private static readonly string OldLogDir = Path.Combine(Application.persistentDataPath, "OldModLogs");
+        private static readonly string LogFilePrev = Path.Combine(Application.persistentDataPath, "ModLog-prev.txt");
         private static readonly string LogFile = Path.Combine(Application.persistentDataPath, "ModLog.txt");
 
         internal static readonly SimpleLogger API = new("API");
@@ -32,36 +30,18 @@ namespace COSML.Log
 
             _logLevel = LogLevel.Debug;
 
-            Directory.CreateDirectory(OldLogDir);
-
-            BackupLog(LogFile, OldLogDir);
+            BackupLog(LogFile, LogFilePrev);
 
             var fs = new FileStream(LogFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
             lock (Locker) Writer = new StreamWriter(fs, Encoding.UTF8) { AutoFlush = true };
             File.SetCreationTimeUtc(LogFile, DateTime.UtcNow);
         }
 
-        private static void BackupLog(string path, string dir)
+        private static void BackupLog(string path, string prevPath)
         {
             if (!File.Exists(path)) return;
 
-            string time = File.GetCreationTimeUtc(path).ToString("MM dd yyyy (HH mm ss)", CultureInfo.InvariantCulture);
-
-            File.Copy(path, Path.Combine(dir, $"ModLog {time}.txt"));
-        }
-
-        internal static void ClearOldModlogs()
-        {
-            string oldLogDir = Path.Combine(Application.persistentDataPath, OldLogDir);
-
-            API.Info($"Deleting modlogs older than {ModHooks.GlobalSettings.ModlogMaxAge} days ago");
-
-            DateTime limit = DateTime.UtcNow.AddDays(-ModHooks.GlobalSettings.ModlogMaxAge);
-
-            foreach (string file in Directory.GetFiles(oldLogDir).Where(f => File.GetCreationTimeUtc(f) < limit))
-            {
-                File.Delete(file);
-            }
+            File.Copy(path, prevPath, true);
         }
 
         internal static void SetLogLevel(LogLevel level)
