@@ -102,7 +102,8 @@ namespace COSML
 
             Directory.CreateDirectory("Mods");
             string mods = Path.Combine(managed_path, "Mods");
-            string[] files = Directory.GetFiles(mods, "*.dll");
+            DirectoryInfo modsDir = new DirectoryInfo(mods);
+            string[] files = modsDir.GetFiles("*", SearchOption.AllDirectories).Where((f) => f.Extension == ".dll").Select((f) => f.FullName).ToArray();
 
             Logging.API.Debug($"DLL files: {string.Join(",\n", files)}");
 
