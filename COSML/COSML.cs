@@ -100,8 +100,8 @@ namespace COSML
 
             Logging.API.Debug($"Loading assemblies and constructing mods");
 
-            Directory.CreateDirectory("Mods");
             string mods = Path.Combine(managed_path, "Mods");
+            Directory.CreateDirectory(mods);
             DirectoryInfo modsDir = new DirectoryInfo(mods);
             string[] files = modsDir.GetFiles("*", SearchOption.AllDirectories).Where((f) => f.Extension == ".dll").Select((f) => f.FullName).ToArray();
 
