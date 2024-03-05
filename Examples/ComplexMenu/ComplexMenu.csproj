@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>ComplexMenu</RootNamespace>
+        <AssemblyName>ComplexMenu</AssemblyName>
+        <TargetFramework>net48</TargetFramework>
+        <Product>ComplexMenu</Product>
+        <Version>1.0.0.0</Version>
+        <Description>Complex Menu Example Mod</Description>
+        <Copyright>Copyright © 2024</Copyright>
+        <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+	    <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="Assembly-CSharp">
+            <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+            <SpecificVersion>False</SpecificVersion>
+        </Reference>
+        <Reference Include="MMHOOK_Assembly-CSharp">
+            <HintPath>$(ManagedDir)\MMHOOK_Assembly-CSharp.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine">
+            <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule">
+            <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+</Project>

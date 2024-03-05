@@ -146,7 +146,7 @@ namespace COSML.Modding
         /// Returns version of Mod
         /// </summary>
         /// <returns>Mod Version</returns>
-        public virtual string GetVersion() => "UNKNOWN";
+        public virtual string GetVersion() => "???";
 
         /// <summary>
         /// Controls when this mod should load compared to other mods.  Defaults to ordered by name.

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace COSML.Menu
+namespace COSML.MainMenu
 {
     public class MainMenuText : MonoBehaviour
     {
@@ -82,17 +82,11 @@ namespace COSML.Menu
 
         public bool AutoExit(bool forceExit)
         {
-            if (forceExit)
-            {
-                ForceExit();
-            }
-
+            if (forceExit) ForceExit();
             return forceExit;
         }
 
-        public void CheckClick()
-        {
-        }
+        public void CheckClick() { }
 
         public bool IsDisplayed()
         {
@@ -115,10 +109,7 @@ namespace COSML.Menu
             {
                 GameController instance = GameController.GetInstance();
                 instance.GetInputsController().EnterUI(this);
-                if (!selector.IsOver())
-                {
-                    instance.PlayGlobalSound("Play_menu_hover", isOver: true);
-                }
+                if (!selector.IsOver()) instance.PlayGlobalSound("Play_menu_hover", true);
             }
 
             isOver = true;

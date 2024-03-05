@@ -1,38 +1,39 @@
-#pragma warning disable 649
+#pragma warning disable CS0649
 
+using COSML.Components.Keyboard;
+using COSML.Components.Toast;
+using COSML.Log;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using static UnityEngine.Object;
 
-namespace COSML.Menu
+namespace COSML.MainMenu
 {
     public class MenuUtils
     {
-        public const float ROOT_MENU_MIN_Y = -72;
-        public const float ROOT_MENU_HEIGHT = 160;
+        internal const float ROOT_MENU_MIN_Y = -72;
+        internal const float ROOT_MENU_HEIGHT = 160;
+        internal const int OPTION_MENU_MAX_PER_PAGE = 10;
+        internal const float OPTION_MENU_HEIGHT = 120;
+        internal const float OPTION_MENU_MIN_Y = 404;
+        internal const float CHEVRON_MARGIN = 96;
+        internal const float CHEVRON_MARGIN_FACTOR = 1.2f;
 
-        public const int OPTION_MENU_MAX_PER_PAGE = 10;
-        public const float OPTION_MENU_HEIGHT = 120;
-        public const float OPTION_MENU_MIN_Y = 404;
-
-        public const float CHEVRON_MARGIN = 96;
-
-        public static GameObject menuTemplate;
-        public static GameObject rootButtonTemplate;
-        public static GameObject buttonTemplate;
-        public static GameObject selectTemplate;
-        public static GameObject sliderTemplate;
-        public static GameObject inputTextTemplate;
+        internal static GameObject MenuTemplate { get; private set; }
+        internal static GameObject RootButtonTemplate { get; private set; }
+        internal static GameObject ButtonTemplate { get; private set; }
+        internal static GameObject SelectTemplate { get; private set; }
+        internal static GameObject SliderTemplate { get; private set; }
+        internal static GameObject InputTextTemplate { get; private set; }
 
         private static bool cloned = false;
 
         /// <summary>
         /// Backup useful common elements.
         /// </summary>
-        public static void SaveElements()
+        internal static void SaveElements()
         {
             if (cloned) return;
 
@@ -40,51 +41,194 @@ namespace COSML.Menu
             templates.SetActive(false);
             DontDestroyOnLoad(templates);
             // Menu
-            menuTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Options"), templates.transform, false);
-            menuTemplate.name = "Menu";
+            MenuTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Options"), templates.transform, false);
+            MenuTemplate.name = "Menu";
             // Root button
-            rootButtonTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Principal/Bouton Quit"), templates.transform, false);
-            rootButtonTemplate.name = "RootButton";
+            RootButtonTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Principal/Bouton Quit"), templates.transform, false);
+            RootButtonTemplate.name = "RootButton";
             // Button
-            buttonTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_OptionsAudio/MenuBarre_Reset"), templates.transform, false);
-            buttonTemplate.name = "Button";
+            ButtonTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_OptionsAudio/MenuBarre_Reset"), templates.transform, false);
+            ButtonTemplate.name = "Button";
             // Select
-            selectTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Options/MenuSelecteur_Langue"), templates.transform, false);
-            selectTemplate.name = "Select";
+            SelectTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Options/MenuSelecteur_Langue"), templates.transform, false);
+            SelectTemplate.name = "Select";
             // Slider
-            sliderTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_OptionsAudio/MenuSlider_General"), templates.transform, false);
-            sliderTemplate.name = "Slider";
+            SliderTemplate = Instantiate(GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_OptionsAudio/MenuSlider_General"), templates.transform, false);
+            SliderTemplate.name = "Slider";
             // Input text
-            inputTextTemplate = Instantiate(GameObject.Find($"{Constants.GLOBAL_CANVAS_PATH}/AnnotationUI/popup/InputField/"), templates.transform, false);
-            inputTextTemplate.name = "InputText";
+            InputTextTemplate = Instantiate(GameObject.Find($"{Constants.GLOBAL_CANVAS_PATH}/AnnotationUI/popup/InputField/"), templates.transform, false);
+            InputTextTemplate.name = "InputText";
 
             cloned = true;
         }
 
-        /// <summary>
-        /// Create a menu.
-        /// </summary>
-        /// <param name="data">Menu data</param>
-        /// <returns></returns>
-        internal static T CreateMenu<T>(InternalMenuData data) where T : AbstractMainMenu
+        internal static void AddKeyboard()
+        {
+            Transform globalCanvasTransform = GameObject.Find(Constants.GLOBAL_CANVAS_PATH).transform;
+            if (globalCanvasTransform.Find("Keyboard") != null) return;
+
+            // Keyboard
+            GameObject keyboardGo = Instantiate(globalCanvasTransform.Find("AnnotationUI").gameObject, globalCanvasTransform, false);
+            keyboardGo.name = "Keyboard";
+            Destroy(keyboardGo.transform.Find("popup/Rune").gameObject);
+            JournalAnnotationUI annotationUI = keyboardGo.GetComponent<JournalAnnotationUI>();
+            UIKeyboard keyboard = keyboardGo.AddComponent<UIKeyboard>();
+            // Keyboard text
+            JournalAnnotationText annotationText = annotationUI.text;
+            UIKeyboardText keyboardText = annotationText.gameObject.AddComponent<UIKeyboardText>();
+            keyboardText.input = annotationText.input;
+            keyboardText.charCounter = annotationText.charCounter;
+            Destroy(annotationText);
+
+            // Setup keys
+            JournalAnnotationKeyLineUI[] keys = annotationUI.keys;
+            List<UIKeyboardKeyLine> keyLineList = [];
+            foreach (JournalAnnotationKeyLineUI line in keys)
+            {
+                UIKeyboardKeyLine kbLine = line.gameObject.AddComponent<UIKeyboardKeyLine>();
+                keyLineList.Add(kbLine);
+                List<UIKeyboardKey> keyList = [];
+                foreach (JournalAnnotationKeyUI key in line.keys)
+                {
+                    if (key == null)
+                    {
+                        keyList.Add(null);
+                        continue;
+                    }
+                    UIKeyboardKey kbKey = key.gameObject.AddComponent<UIKeyboardKey>();
+                    kbKey.backImg = key.backImg;
+                    kbKey.charText = key.charText;
+                    kbKey.pushImg = key.pushImg;
+                    kbKey.pictoImg = key.pictoImg;
+                    kbKey.skipOnQwertyUS = key.skipOnQwertyUS;
+                    kbKey.keyCodeQWERTY = key.keyCodeQWERTY;
+                    kbKey.keyCodeQWERTY_US = key.keyCodeQWERTY_US;
+                    kbKey.keyCodeAZERTY = key.keyCodeAZERTY;
+                    kbKey.keyCodeQWERTS = key.keyCodeQWERTS;
+                    kbKey.keyType = (UIKeyboardKey.KeyType)key.keyType;
+                    kbKey.padElements = key.padElements;
+                    kbKey.tipsImg = key.tipsImg;
+                    kbKey.tipsSprites = key.tipsSprites;
+                    kbKey.over = key.over;
+                    keyList.Add(kbKey);
+                    kbKey.Init();
+                    Destroy(key.gameObject.GetComponent<JournalAnnotationKeyUI>());
+                }
+                kbLine.keys = [.. keyList];
+                Destroy(line.gameObject.GetComponent<JournalAnnotationKeyLineUI>());
+            }
+
+            // Assign values
+            keyboard.closeButton = annotationUI.closeButton;
+            keyboard.validButton = annotationUI.validButton;
+            keyboard.clearButton = annotationUI.clearButton;
+            keyboard.keys = [.. keyLineList];
+            keyboard.text = keyboardText;
+            keyboard.englishKeyboardConfig = annotationUI.englishKeyboardConfig;
+            keyboard.frenchKeyboardConfig = annotationUI.frenchKeyboardConfig;
+            keyboard.spanishEuropeanKeyboardConfig = annotationUI.spanishEuropeanKeyboardConfig;
+            keyboard.spanishLatinAmericanKeyboardConfig = annotationUI.spanishLatinAmericanKeyboardConfig;
+            keyboard.portugueseKeyboardConfig = annotationUI.portugueseKeyboardConfig;
+            keyboard.germanKeyboardConfig = annotationUI.germanKeyboardConfig;
+            keyboard.italianKeyboardConfig = annotationUI.italianKeyboardConfig;
+            keyboard.chineseSimplifiedKeyboardConfig = annotationUI.chineseSimplifiedKeyboardConfig;
+            keyboard.chineseTraditionalKeyboardConfig = annotationUI.chineseTraditionalKeyboardConfig;
+            keyboard.japaneseKeyboardConfig = annotationUI.japaneseKeyboardConfig;
+            keyboard.koreanKeyboardConfig = annotationUI.koreanKeyboardConfig;
+            keyboard.russianKeyboardConfig = annotationUI.russianKeyboardConfig;
+            keyboard.czeshKeyboardConfig = annotationUI.czeshKeyboardConfig;
+            keyboard.polishKeyboardConfig = annotationUI.polishKeyboardConfig;
+            keyboard.picotPrevKey = annotationUI.picotPrevKey;
+            keyboard.pictoNextKey = annotationUI.pictoNextKey;
+            keyboard.offKeyColor = annotationUI.offKeyColor;
+            keyboard.keyboardChangeBack = annotationUI.keyboardChangeBack;
+            keyboard.shiftImg = annotationUI.shiftImg;
+            keyboard.shiftOnSprite = annotationUI.shiftOnSprite;
+            keyboard.shiftOffSprite = annotationUI.shiftOffSprite;
+            Destroy(annotationUI);
+
+            Patches.UIController uiController = (Patches.UIController)GameController.GetInstance().GetUIController();
+            uiController.keyboard = keyboard;
+            keyboard.Init();
+        }
+
+        internal static void AddToast()
+        {
+            Transform globalCanvasTransform = GameObject.Find(Constants.GLOBAL_CANVAS_PATH).transform;
+            if (globalCanvasTransform.Find("Toast") != null) return;
+
+            // Base
+            GameObject toastGo = new("Toast");
+            toastGo.transform.SetParent(globalCanvasTransform, false);
+
+            // Canvas
+            GameObject canvasGo = new("Canvas");
+            canvasGo.SetActive(false);
+            canvasGo.transform.SetParent(toastGo.transform, false);
+            UIToast toast = canvasGo.AddComponent<UIToast>();
+            toast.canvas = canvasGo.AddComponent<CanvasGroup>();
+            canvasGo.AddComponent<RectTransform>();
+            toast.animator = canvasGo.AddComponent<UIToastAnimator>();
+
+            // Background
+            GameObject bgGo = new("Background");
+            bgGo.transform.SetParent(canvasGo.transform, false);
+            toast.background = bgGo.AddComponent<Image>();
+            toast.background.color = Color.black;
+
+            // Text
+            GameObject toastTextGo = new("Text");
+            toastTextGo.transform.SetParent(canvasGo.transform, false);
+            toast.text = toastTextGo.AddComponent<Text>();
+            toast.text.font = MenuResources.GetFontByName("Geomanist-Medium");
+            toast.text.fontSize = (uint)(I18n.CurrentI18nType - I18nType.CHINESE_SIMPLIFIED) <= 3u ? 52 : 40;
+            toast.text.alignment = TextAnchor.MiddleRight;
+            toast.text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            toast.text.verticalOverflow = VerticalWrapMode.Overflow;
+
+            Patches.UIController uiController = (Patches.UIController)GameController.GetInstance().GetUIController();
+            uiController.toast = toast;
+            toast.Init();
+        }
+
+        internal static Patches.MainMenuButton CreateRootButton(ButtonData data)
+        {
+            GameObject buttonGo = Instantiate(RootButtonTemplate, data.parent, false);
+            buttonGo.name = data.name ?? "RootButton";
+            Patches.MainMenuButton buttonMenu = buttonGo.GetComponent<Patches.MainMenuButton>();
+            buttonMenu.menu = data.menu;
+            buttonMenu.buttonId = data.buttonId;
+
+            // Label
+            GameObject labelGo = buttonGo.transform.Find("Text").gameObject;
+            Text labelText = labelGo.GetComponent<Text>();
+            labelText.text = data.label.label?.ToUpper() ?? "MODS";
+            I18n.AddComponentI18nModdedText(labelText.gameObject, data.label);
+
+            return buttonMenu;
+        }
+
+        internal static T CreateMenu<T>(MenuData data) where T : AbstractMainMenu
         {
             Transform mainMenuTransform = GameObject.Find(Constants.MAIN_MENU_PATH).transform;
-            GameObject menuGo = Instantiate(menuTemplate, mainMenuTransform, false);
-            menuGo.name = data.name ?? $"Menu_{data.label?.Replace(" ", "") ?? ""}";
-            menuGo.transform.Find("Text_Titre").GetComponent<Text>().text = data.label?.ToUpper() ?? "MENU";
+            GameObject menuGo = Instantiate(MenuTemplate, mainMenuTransform, false);
+            menuGo.name = data.name ?? $"Menu_{data.label.label.Replace(" ", "_")}";
+            Text titleText = menuGo.transform.Find("Text_Titre").GetComponent<Text>();
+            titleText.text = data.label.label?.ToUpper() ?? "MENU";
+            I18n.AddComponentI18nModdedText(titleText.gameObject, data.label);
 
-            Destroy(menuGo.GetComponent<OptionsMainMenu>());
+            Destroy(menuGo.GetComponent<global::OptionsMainMenu>());
             T menu = menuGo.AddComponent<T>();
 
             // Back button
             if (menu is IMainMenu mainMenu)
             {
-                mainMenu.backButton = menuGo.transform.Find("BoutonBack").GetComponent<MainMenuButton>();
+                mainMenu.backButton = menuGo.transform.Find("BoutonBack").GetComponent<Patches.MainMenuButton>();
                 mainMenu.backButton.buttonId = Constants.BACK_BUTTON_ID;
                 mainMenu.backButton.menu = menu;
             }
 
-            ClearChildren(menuGo, (GameObject go) => go.name.StartsWith("Menu"));
+            menuGo.ClearChildren(go => go.name.StartsWith("Menu"));
 
             // Reset Swapper/PadIndics layer position
             Transform padIndicsTransform = mainMenuTransform.Find("PadIndics");
@@ -96,7 +240,7 @@ namespace COSML.Menu
 
             if (menu is ModMenu modMenu)
             {
-                modMenu.Init(data.options ?? new List<IOptionData>());
+                modMenu.Init(data.options);
                 modMenu.parentMenu = data.parent;
                 modMenu.onBack = data.onBack;
             }
@@ -108,77 +252,32 @@ namespace COSML.Menu
             return menu;
         }
 
-        /// <summary>
-        /// Create a root menu button.
-        /// </summary>
-        /// <param name="data">Button data</param>
-        /// <returns></returns>
-        internal static MainMenuButton CreateRootButton(InternalButtonData data)
+        internal static Patches.MainMenuButton CreateButton(ButtonData data)
         {
-            GameObject buttonGo = data.parent != null ? Instantiate(rootButtonTemplate, data.parent, false) : Instantiate(rootButtonTemplate);
-            buttonGo.name = data.name ?? "RootButton";
-            MainMenuButton buttonMenu = buttonGo.GetComponent<MainMenuButton>();
-            buttonMenu.menu = data.menu;
-            buttonMenu.buttonId = data.buttonId;
-            buttonMenu.transform.localPosition = GetRootButtonLocalPosition(data.position);
-
-            // Label
-            GameObject labelGo = buttonGo.transform.Find("Text").gameObject;
-            Text labelText = labelGo.GetComponent<Text>();
-            labelText.text = data.label?.ToUpper() ?? "BUTTON";
-
-            return buttonMenu;
-        }
-
-        /// <summary>
-        /// Create a button.
-        /// </summary>
-        /// <param name="data">Button data</param>
-        /// <returns></returns>
-        internal static MainMenuButton CreateButton(InternalButtonData data)
-        {
-            GameObject buttonGo = data.parent != null ? Instantiate(buttonTemplate, data.parent, false) : Instantiate(buttonTemplate);
+            GameObject buttonGo = Instantiate(ButtonTemplate, data.parent, false);
             buttonGo.name = data.name ?? "Button";
-            MainMenuButton buttonMenu = buttonGo.GetComponent<MainMenuButton>();
-            buttonMenu.menu = data.menu;
-            buttonMenu.buttonId = data.buttonId;
-            buttonMenu.transform.localPosition = GetOptionButtonLocalPosition(data.position);
-
-            // Label
-            GameObject labelGo = buttonGo.transform.Find("Text").gameObject;
-            Text labelText = labelGo.GetComponent<Text>();
-            labelText.text = data.label?.ToUpper() ?? "BUTTON";
+            Patches.MainMenuButton button = buttonGo.GetComponent<Patches.MainMenuButton>();
+            button.menu = data.menu;
+            button.buttonId = data.buttonId;
 
             // Arrow
-            if (data.arrow == false)
-            {
-                buttonGo.transform.Find("fleche").gameObject.SetActive(false);
-            }
+            buttonGo.transform.Find("fleche")?.gameObject.SetActive(data.arrow ?? true);
 
-            return buttonMenu;
+            UpdateOption(button, data.label);
+
+            return button;
         }
 
-        /// <summary>
-        /// Create a text.
-        /// </summary>
-        /// <param name="data">Text data</param>
-        /// <returns></returns>
-        internal static MainMenuText CreateText(InternalTextData data)
+        internal static MainMenuText CreateText(TextData data)
         {
             // Base
-            GameObject textGo = data.parent != null ? Instantiate(selectTemplate, data.parent, false) : Instantiate(selectTemplate);
+            GameObject textGo = Instantiate(SelectTemplate, data.parent, false);
             textGo.name = data.name ?? "Text";
             MainMenuSelector selector = textGo.GetComponent<MainMenuSelector>();
             MainMenuText text = textGo.AddComponent<MainMenuText>();
             text.menu = data.menu;
             text.overAnimator = selector.overAnimator;
-            text.transform.localPosition = GetOptionButtonLocalPosition(data.position);
             Destroy(selector);
-
-            // Text
-            GameObject labelGo = textGo.transform.Find("Text_Libellé").gameObject;
-            Text labelText = labelGo.GetComponent<Text>();
-            labelText.text = data.label?.ToUpper() ?? "TEXT";
 
             // Over
             GameObject overGo = textGo.transform.Find("Collider").gameObject;
@@ -192,25 +291,46 @@ namespace COSML.Menu
             Destroy(textGo.transform.Find("ChevronPrev").gameObject);
             Destroy(textGo.transform.Find("ChevronNext").gameObject);
 
+            UpdateOption(text, data.label);
+
             return text;
         }
 
-        /// <summary>
-        /// Create a select.
-        /// </summary>
-        /// <param name="data">Select data</param>
-        /// <returns></returns>
-        internal static MainMenuSelector CreateSelect(InternalSelectData data)
+        internal static T UpdateOption<T>(T option, I18nKey label) where T : MonoBehaviour
+        {
+            Text text = option.transform.Find("Text_Libellé")?.GetComponent<Text>();
+            text ??= option.transform.Find("Text")?.GetComponent<Text>();
+            if (text != null)
+            {
+                if (label.key != null)
+                {
+                    I18nModdedText i18nModText = I18n.AddComponentI18nModdedText(text.gameObject, label);
+                    i18nModText?.Translate();
+                }
+                else
+                {
+                    text.text = label.label.ToUpper();
+                    I18n.RemoveComponentI18nText(text.gameObject);
+                }
+            }
+            else
+            {
+                Logging.API.Warn($"Could not find Text component to update for {option.name}");
+            }
+
+
+            return option;
+        }
+
+        internal static Patches.MainMenuSelector CreateSelect(SelectData data)
         {
             // Base
-            GameObject selectGo = data.parent != null ? Instantiate(selectTemplate, data.parent, false) : Instantiate(selectTemplate);
+            GameObject selectGo = Instantiate(SelectTemplate, data.parent, false);
             selectGo.name = data.name ?? "Select";
-            MainMenuSelector select = selectGo.GetComponent<MainMenuSelector>();
+            Patches.MainMenuSelector select = (Patches.MainMenuSelector)selectGo.GetComponent<MainMenuSelector>();
             select.menu = data.menu;
             select.buttonId = data.buttonId;
-            select.transform.localPosition = GetOptionButtonLocalPosition(data.position);
-            data.values ??= new string[1] { "" };
-            select.SetValues(data.values, I18nType.ENGLISH, true);
+            data.values ??= [];
 
             // Chevrons
             GameObject chevronPrevGo = selectGo.transform.Find("ChevronPrev").gameObject;
@@ -219,67 +339,65 @@ namespace COSML.Menu
             MainMenuSelectorButton chevronNextButton = chevronNextGo.GetComponent<MainMenuSelectorButton>();
             chevronPrevButton.img = chevronPrevGo.GetComponent<Image>();
             chevronNextButton.img = chevronNextGo.GetComponent<Image>();
-            chevronPrevButton.Init(select);
-            chevronNextButton.Init(select);
+            chevronPrevGo.SetActive(false);
 
             // Collider
             GameObject colliderGo = selectGo.transform.Find("Collider").gameObject;
             MainMenuSelectorOver colliderOver = colliderGo.GetComponent<MainMenuSelectorOver>();
-            colliderOver.Init(select);
 
-            // Label/value
-            GameObject labelGo = selectGo.transform.Find("Text_Libellé").gameObject;
-            Text labelText = labelGo.GetComponent<Text>();
-            labelText.text = data.label?.ToUpper() ?? "SELECT";
-            GameObject selectValueGo = selectGo.transform.Find("Text_Valeur").gameObject;
-            float textWidth = FindGreatestWidth(selectValueGo.GetComponent<Text>(), data.values);
-            float chevronNextX = chevronNextGo.transform.localPosition.x;
-            selectValueGo.transform.localPosition = new Vector3(chevronNextX - (CHEVRON_MARGIN + textWidth / 2), labelGo.transform.localPosition.y, 0);
-            chevronPrevGo.transform.localPosition = new Vector3(chevronNextX - (2 * CHEVRON_MARGIN + textWidth), chevronPrevGo.transform.localPosition.y, 0);
-            chevronPrevGo.SetActive(false);
             select.Init(data.value);
+            select.SetValues(data.values, I18n.CurrentI18nType, true);
+
+            UpdateSelect(select, data);
 
             return select;
         }
 
-        /// <summary>
-        /// Create a toggle.
-        /// </summary>
-        /// <param name="data">Toggle data</param>
-        /// <returns></returns>
-        internal static MainMenuSelector CreateToggle(InternalToggleData data)
+        internal static Patches.MainMenuSelector UpdateSelect(Patches.MainMenuSelector select, SelectData data)
         {
-            MainMenuSelector toggle = CreateSelect(new InternalSelectData
+            data.values ??= [""];
+            select.SetValues(data.values, I18n.CurrentI18nType, true);
+            select.SetCurrentValue(data.value);
+
+            UpdateOption(select, data.label);
+
+            return select;
+        }
+
+        internal static MainMenuSelector CreateToggle(ToggleData data)
+        {
+            MainMenuSelector toggle = CreateSelect(new SelectData
             {
                 name = data.name,
                 parent = data.parent,
                 menu = data.menu,
                 buttonId = data.buttonId,
-                position = data.position,
                 label = data.label,
-                values = new string[2] { data.off ?? "OFF", data.on ?? "ON" },
+                values = [data.off, data.on],
                 value = data.value ? 1 : 0
             });
-            toggle.name = "Toggle";
+            toggle.name = data.name ?? "Toggle";
 
             return toggle;
         }
 
-        /// <summary>
-        /// Create a slider.
-        /// </summary>
-        /// <param name="data">Slider data</param>
-        /// <returns></returns>
-        internal static MainMenuSlider CreateSlider(InternalSliderData data)
+        internal static Patches.MainMenuSelector UpdateToggle(Patches.MainMenuSelector toggle, ToggleData data)
+        {
+            return UpdateSelect(toggle, new SelectData
+            {
+                values = [data.off, data.on],
+                value = data.value ? 1 : 0
+            });
+        }
+
+        internal static Patches.MainMenuSlider CreateSlider(SliderData data)
         {
             // Base
-            GameObject sliderGo = data.parent != null ? Instantiate(sliderTemplate, data.parent, false) : Instantiate(sliderTemplate);
+            GameObject sliderGo = Instantiate(SliderTemplate, data.parent, false);
             sliderGo.name = data.name ?? "Slider";
             Patches.MainMenuSlider slider = (Patches.MainMenuSlider)sliderGo.GetComponent<MainMenuSlider>();
             slider.menu = data.menu;
             slider.buttonId = data.buttonId;
-            slider.transform.localPosition = GetOptionButtonLocalPosition(data.position);
-            data.steps ??= new object[0];
 
             // Chevrons
             GameObject chevronPrevGo = sliderGo.transform.Find("ChevronPrev").gameObject;
@@ -288,33 +406,31 @@ namespace COSML.Menu
             MainMenuSelectorButton chevronNextButton = chevronNextGo.GetComponent<MainMenuSelectorButton>();
             chevronPrevButton.img = chevronPrevGo.GetComponent<Image>();
             chevronNextButton.img = chevronNextGo.GetComponent<Image>();
-            chevronPrevButton.Init(slider);
-            chevronNextButton.Init(slider);
             chevronPrevGo.SetActive(false);
 
-            // Collider
-            GameObject colliderGo = sliderGo.transform.Find("Collider").gameObject;
-            MainMenuSelectorOver colliderOver = colliderGo.GetComponent<MainMenuSelectorOver>();
-            colliderOver.Init(slider);
+            // Value
+            GameObject sliderValueGo = Instantiate(SelectTemplate.transform.Find("Text_Valeur").gameObject, sliderGo.transform, false);
+            sliderValueGo.name = "Text_Valeur";
+
+            UpdateSlider(slider, data);
+
+            return slider;
+        }
+
+        internal static Patches.MainMenuSlider UpdateSlider(Patches.MainMenuSlider slider, SliderData data)
+        {
+            data.steps ??= [];
 
             // Label/value
-            GameObject labelGo = sliderGo.transform.Find("Text_Libellé").gameObject;
-            Text labelText = labelGo.GetComponent<Text>();
-            labelText.text = data.label?.ToUpper() ?? "SLIDER";
-            GameObject sliderValueGo = Instantiate(selectTemplate.transform.Find("Text_Valeur").gameObject, sliderGo.transform, false);
-            sliderValueGo.name = "Value_Text";
-            Text sliderValueText = sliderValueGo.GetComponent<Text>();
+            Text sliderValueText = slider.transform.Find("Text_Valeur").GetComponent<Text>();
             sliderValueText.alignment = TextAnchor.MiddleRight;
-            float textWidth = FindGreatestWidth(sliderValueText, data.steps);
-            float chevronPrevX = chevronPrevGo.transform.localPosition.x;
-            sliderValueGo.transform.localPosition = new Vector3(-CHEVRON_MARGIN - 32, sliderValueGo.transform.localPosition.y, 0);
+            sliderValueText.transform.localPosition = new Vector3(-CHEVRON_MARGIN - 32, sliderValueText.transform.localPosition.y, 0);
             slider.valueText = sliderValueText;
-            slider.Init(data.value);
 
             // Slider steps
-            GameObject sliderBarGo = sliderGo.transform.Find("Slider").gameObject;
+            GameObject sliderBarGo = slider.transform.Find("Slider").gameObject;
             GameObject sliderFondGo = sliderBarGo.transform.Find("SliderFond").gameObject;
-            ClearChildren(sliderFondGo, (GameObject go) => go.name != "Step0");
+            sliderFondGo.ClearChildren(go => go.name != "Step0");
             MainMenuSliderPart[] parts = new MainMenuSliderPart[data.steps.Length];
             GameObject step0 = sliderFondGo.transform.GetChild(0).gameObject;
             parts[0] = step0.GetComponent<MainMenuSliderPart>();
@@ -330,345 +446,627 @@ namespace COSML.Menu
                 MainMenuSliderPart stepPart = step.GetComponent<MainMenuSliderPart>();
                 stepPart.value = i;
                 parts[i] = stepPart;
-                stepPart.Init(slider);
             }
             slider.slideParts = parts;
-            slider.SetValues(data.steps.Select(s => s.ToString()).ToArray());
+
+            slider.Init(data.value);
+            slider.SetValues(data.steps);
+
+            object value = data.steps[Mathf.Clamp(data.value, 0, data.steps.Length - 1)];
+            if (value is I18nKey i18nKey && i18nKey.key != null)
+            {
+                I18nModdedText i18nModText = I18n.AddComponentI18nModdedText(sliderValueText.gameObject, i18nKey);
+                i18nModText?.Translate();
+            }
+            else
+            {
+                sliderValueText.text = value.ToString().ToUpper();
+                I18n.RemoveComponentI18nText(sliderValueText.gameObject);
+            }
+
+            UpdateOption(slider, data.label);
 
             return slider;
         }
 
-        /// <summary>
-        /// Create a text input.
-        /// </summary>
-        /// <param name="data">Input text data</param>
-        /// <returns></returns>
-        internal static MainMenuInputButton CreateInputText(InternalInputTextData data)
+        internal static MainMenuInputText CreateInputText(InputTextData data)
         {
             // Button
-            MainMenuText textButton = CreateText(new InternalTextData
+            MainMenuText textInput = CreateText(new TextData
             {
-                name = data.name ?? "InputButton",
+                name = data.name,
                 label = data.label ?? "INPUT",
                 parent = data.parent,
-                menu = data.menu,
-                position = data.position
+                menu = data.menu
             });
-            MainMenuInputButton inputButton = textButton.gameObject.AddComponent<MainMenuInputButton>();
-            inputButton.menu = textButton.menu;
-            inputButton.over = inputButton.gameObject.AddComponent<MainMenuInputButtonOver>();
-            inputButton.overAnimator = textButton.overAnimator;
-            Destroy(textButton);
+            textInput.name = data.name ?? "InputText";
+            MainMenuInputText input = textInput.gameObject.AddComponent<MainMenuInputText>();
+            input.menu = textInput.menu;
+            input.over = input.gameObject.AddComponent<MainMenuInputTextOver>();
+            input.overAnimator = textInput.overAnimator;
+            Destroy(textInput);
 
             // Input field
-            GameObject inputFieldGo = Instantiate(inputTextTemplate, inputButton.transform, false);
+            GameObject inputFieldGo = Instantiate(InputTextTemplate, input.transform, false);
             Destroy(inputFieldGo.GetComponent<JournalAnnotationText>());
             inputFieldGo.name = "InputField";
             inputFieldGo.transform.localPosition = new Vector3(-30, -64, 0);
             InputField inputField = inputFieldGo.GetComponent<InputField>();
             inputField.text = data.text ?? "";
-            inputField.characterLimit = data.limit;
+            inputField.characterLimit = data.max;
             Text inputText = inputFieldGo.transform.Find("Text").GetComponent<Text>();
             inputText.alignment = TextAnchor.MiddleLeft;
-            inputText.GetComponent<RectTransform>().sizeDelta = new Vector2(700, 100);
-            inputButton.valueText = inputText;
-            inputButton.input = inputField;
+            input.valueText = inputText;
+            input.input = inputField;
+            input.maxChar = data.max;
 
             // Collider
-            GameObject colliderGo = inputButton.transform.Find("Collider").gameObject;
-            inputButton.inputOver = colliderGo.AddComponent<MainMenuInputButtonOver>();
+            GameObject colliderGo = input.transform.Find("Collider").gameObject;
+            input.inputOver = colliderGo.AddComponent<MainMenuInputTextOver>();
             Destroy(colliderGo.GetComponent<MainMenuTextOver>());
 
             // Background
             GameObject background = new("Background");
-            background.transform.SetParent(inputButton.transform, false);
+            background.transform.SetParent(input.transform, false);
             Image image = background.AddComponent<Image>();
-            image.sprite = MenuResources.InputButtonBackground;
+            image.sprite = MenuResources.InputTextBackground;
             RectTransform rectImage = image.GetComponent<RectTransform>();
             rectImage.sizeDelta = new Vector2(image.sprite.textureRect.width, image.sprite.textureRect.height);
             RectTransform rectBackground = image.GetComponent<RectTransform>();
             rectBackground.sizeDelta = rectImage.sizeDelta;
             background.transform.localPosition = new Vector3(320, background.transform.localPosition.y, 0);
             inputFieldGo.transform.SetParent(null, false);
-            inputFieldGo.transform.SetParent(inputButton.transform, false);
+            inputFieldGo.transform.SetParent(input.transform, false);
 
-            inputButton.Init();
+            // Char counter
+            GameObject counter = new("CharCounter");
+            counter.transform.SetParent(input.transform, false);
+            Text counterText = counter.AddComponent<Text>();
+            counterText.color = new Color(0.6392f, 0.6392f, 0.6392f);
+            counterText.font = MenuResources.GetFontByName("Geomanist-Medium");
+            counterText.fontSize = 34;
+            counterText.alignment = TextAnchor.MiddleRight;
+            counterText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            counterText.verticalOverflow = VerticalWrapMode.Overflow;
+            counter.transform.localPosition = new Vector3(620, -62, 0);
+            input.counterText = counterText;
 
-            return inputButton;
+            input.Init();
+
+            UpdateInputText(input, data);
+
+            return input;
         }
 
-        private static float FindGreatestWidth(Text text, object[] values)
+        internal static MainMenuInputText UpdateInputText(MainMenuInputText input, InputTextData data)
         {
-            float width = 0;
-
-            foreach (object val in values)
+            InputField inputField = input.transform.Find("InputField").GetComponent<InputField>();
+            inputField.text = data.text;
+            input.maxChar = data.max;
+            input.counterText.gameObject.SetActive(data.max > 0);
+            if (data.max > 0)
             {
-                text.text = val.ToString();
-                width = Math.Max(width, text.preferredWidth);
+                input.input.characterLimit = data.max;
+                input.input.text = input.valueText.text[..Math.Min(data.max, input.valueText.text.Length)];
+                input.counterText.text = $"{input.input.text.Length}/{data.max}";
             }
+            Text inputText = inputField.transform.Find("Text").GetComponent<Text>();
+            inputText.GetComponent<RectTransform>().sizeDelta = new Vector2(data.max > 0 ? 590 : 700, 100);
 
-            return width;
+            UpdateOption(input, data.label);
+
+            return input;
         }
 
-        /// <summary>
-        /// Destroy a gameobject's children.
-        /// </summary>
-        /// <param name="parent">GameObject parent</param>
-        /// <param name="condition">Condition for destroying children</param>
-        public static void ClearChildren(GameObject parent, Func<GameObject, bool> condition)
-        {
-            foreach (Transform child in parent.transform)
-            {
-                if (condition(child.gameObject)) Destroy(child.gameObject);
-            }
-        }
-
-        public static Vector3 GetRootButtonLocalPosition(int position)
+        internal static Vector3 GetRootButtonLocalPosition(int position)
         {
             return new Vector3(0, ROOT_MENU_MIN_Y - (position * ROOT_MENU_HEIGHT), 0);
         }
 
-        public static Vector3 GetOptionButtonLocalPosition(int position)
+        internal static Vector3 GetOptionButtonLocalPosition(int position)
         {
             return new Vector3(0, OPTION_MENU_MIN_Y - (position % OPTION_MENU_MAX_PER_PAGE * OPTION_MENU_HEIGHT), 0);
         }
 
         /// <summary>
-        /// A struct representing a menu.
+        /// Swap to a menu.
+        /// <param name="menuId">Id of the menu.</param>
         /// </summary>
-        internal struct InternalMenuData
+        public static void GoTo(string menuId)
+        {
+            AbstractMainMenu menu = FindMenuById(menuId);
+            if (menu == null)
+            {
+                Logging.API.Warn($"Menu {menuId} has not been found!");
+                return;
+            }
+
+            GameController.GetInstance()?.GetUIController().mainMenu?.Swap(menu, true);
+        }
+
+        /// <summary>
+        /// Swap to the previous menu.
+        /// </summary>
+        public static void Back()
+        {
+            GameController.GetInstance()?.GetUIController().mainMenu?.GoToPreviousMenu();
+        }
+
+        /// <summary>
+        /// Find a menu in the main menu tree.
+        /// <param name="menuId">Id of the menu.</param>
+        /// </summary>
+        /// <returns>The found menu.</returns>
+        public static AbstractMainMenu FindMenuById(string menuId)
+        {
+            return GameObject.Find($"{Constants.MAIN_MENU_PATH}/{menuId}")?.GetComponent<AbstractMainMenu>();
+        }
+
+        /// <summary>
+        /// Refresh current menu.
+        /// </summary>
+        public static void Refresh()
+        {
+            GameController instance = GameController.GetInstance();
+            UIController uiController = GameController.GetInstance().GetUIController();
+            AbstractMainMenu currentMenu = ((Patches.MainMenu)uiController.mainMenu).CurrentMenu;
+            if (currentMenu is ModMenu || currentMenu is ModsMainMenu)
+            {
+                currentMenu.ForceExit();
+                AbstractUIBrowser browser = currentMenu.GetBrowser();
+                if (instance.GetInputsController() is Patches.PadController padController)
+                {
+                    padController.SetUIBrowser(browser);
+                }
+            }
+        }
+
+        internal struct MenuData
         {
             internal string name;
-            internal string label;
+            internal I18nKey label;
             internal AbstractMainMenu parent;
-            internal List<IOptionData> options;
+            internal IList<MenuOption> options;
             internal Action onBack;
         }
 
-        /// <summary>
-        /// A struct representing a button.
-        /// </summary>
-        internal struct InternalButtonData
+        internal struct ButtonData
         {
             internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
             internal int buttonId;
-            internal int position;
-            internal string label;
+            internal I18nKey label;
             internal bool? arrow;
+            internal bool visible;
         }
 
-        /// <summary>
-        /// A struct representing a text.
-        /// </summary>
-        internal struct InternalTextData
+        internal struct TextData
         {
             internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
-            internal int position;
-            internal string label;
+            internal I18nKey label;
+            internal bool visible;
         }
 
-        /// <summary>
-        /// A struct representing a select.
-        /// </summary>
-        internal struct InternalSelectData
+        internal struct SelectData
         {
             internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
             internal int buttonId;
-            internal int position;
-            internal string label;
-            internal string[] values;
+            internal I18nKey label;
+            internal I18nKey[] values;
             internal int value;
+            internal bool visible;
         }
 
-        /// <summary>
-        /// A struct representing a toggle.
-        /// </summary>
-        internal struct InternalToggleData
+        internal struct ToggleData
         {
             internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
             internal int buttonId;
-            internal int position;
-            internal string label;
-            internal string on;
-            internal string off;
+            internal I18nKey label;
+            internal I18nKey on;
+            internal I18nKey off;
             internal bool value;
+            internal bool visible;
         }
 
-        /// <summary>
-        /// A struct representing a slider.
-        /// </summary>
-        internal struct InternalSliderData
+        internal struct SliderData
         {
             internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
             internal int buttonId;
-            internal int position;
-            internal string label;
+            internal I18nKey label;
             internal object[] steps;
             internal int value;
+            internal bool visible;
         }
 
-        /// <summary>
-        /// A struct representing a slider.
-        /// </summary>
-        internal struct InternalInputTextData
+        internal struct InputTextData
         {
             internal string name;
             internal Transform parent;
             internal AbstractMainMenu menu;
             internal int buttonId;
-            internal int position;
-            internal string label;
+            internal I18nKey label;
             internal string text;
-            internal int limit;
+            internal int max;
+            internal bool visible;
         }
 
         /// <summary>
-        /// A struct representing a mod menu.
+        /// A class representing a menu.
         /// </summary>
-        public struct MenuData
+        public class MenuMain
         {
-            public string label { get; }
-            public List<IOptionData> options { get; }
-            public Action onBack { get; }
+            /// <summary>
+            /// Menu id.
+            /// </summary>
+            public string Id { get; private set; }
+            /// <summary>
+            /// Menu label.
+            /// </summary>
+            public I18nKey Label { get; private set; }
+            /// <summary>
+            /// Menu options list.
+            /// </summary>
+            public IList<MenuOption> Options { get; private set; }
+            /// <summary>
+            /// Menu back action.
+            /// </summary>
+            public Action OnBack { get; private set; }
 
-            public MenuData(string label, List<IOptionData> options, Action onBack)
+            /// <summary>
+            /// Create a menu.
+            /// </summary>
+            /// <param name="id">Menu id.</param>
+            /// <param name="label">Menu label.</param>
+            /// <param name="options">Menu options list.</param>
+            /// <param name="onBack">Menu back action.</param>
+            public MenuMain(string id, I18nKey label, IList<MenuOption> options, Action onBack = null)
             {
-                this.label = label;
-                this.options = options;
-                this.onBack = onBack;
-            }
-        }
-
-        /// <summary>
-        /// An interface for a menu option.
-        /// </summary>
-        public interface IOptionData { }
-
-        /// <summary>
-        /// A struct representing a button option.
-        /// </summary>
-        public struct ButtonData : IOptionData
-        {
-            public string label { get; }
-            public Action onClick { get; }
-            public MenuData? menu { get; }
-
-            public ButtonData(string label, Action onClick)
-            {
-                this.label = label;
-                this.onClick = onClick;
-            }
-
-            public ButtonData(string label, MenuData menu, Action onClick) : this(label, onClick)
-            {
-                this.menu = menu;
+                Id = id;
+                Label = label;
+                Options = options;
+                OnBack = onBack;
             }
         }
 
         /// <summary>
-        /// A struct representing a text option.
+        /// A class for a menu option.
         /// </summary>
-        public struct TextData : IOptionData
+        public abstract class MenuOption
         {
-            public string label { get; }
+            /// <summary>
+            /// Option label.
+            /// </summary>
+            public I18nKey Label { get; protected set; }
+            /// <summary>
+            /// Option visibility.
+            /// </summary>
+            public bool Visible { get; protected set; }
 
-            public TextData(string label)
+            internal event Action<MenuOption> UpdateHook;
+            internal event Action<bool> VisibleHook;
+
+            /// <summary>
+            /// Change menu option label.
+            /// </summary>
+            /// <param name="label"></param>
+            public void SetLabel(I18nKey label)
             {
-                this.label = label;
+                Label = label;
+                UpdateHook?.Invoke(this);
+            }
+
+            /// <summary>
+            /// Change menu option visibility.
+            /// </summary>
+            /// <param name="visible">Option visibility value.</param>
+            public void SetVisible(bool visible)
+            {
+                Visible = visible;
+                VisibleHook?.Invoke(visible);
+            }
+
+            protected void Update() => UpdateHook?.Invoke(this);
+
+            internal void ResetEvents()
+            {
+                UpdateHook = null;
+                VisibleHook = null;
             }
         }
 
         /// <summary>
-        /// A struct representing a select option.
+        /// A class representing a menu button option.
         /// </summary>
-        public struct SelectData : IOptionData
+        public class MenuButton : MenuOption
         {
-            public SelectData(string label, string[] values, int value, Action<int> onChange)
+            /// <summary>
+            /// Button click action.
+            /// </summary>
+            public Action OnClick { get; private set; }
+            /// <summary>
+            /// Button menu.
+            /// </summary>
+            public MenuMain Menu { get; private set; }
+
+            /// <summary>
+            /// Create a menu button.
+            /// </summary>
+            /// <param name="label">Button label.</param>
+            /// <param name="menu">Button menu.</param>
+            /// <param name="onClick">Button click action.</param>
+            /// <param name="visible">Button visibility.</param>
+            public MenuButton(I18nKey label, MenuMain menu = null, Action onClick = null, bool visible = true)
             {
-                this.label = label;
-                this.values = values;
-                this.value = value;
-                this.onChange = onChange;
-            }
-
-            public string label { get; }
-            public string[] values { get; }
-            public int value { get; }
-            public Action<int> onChange { get; }
-        }
-
-        /// <summary>
-        /// A struct representing a toggle option.
-        /// </summary>
-        public struct ToggleData : IOptionData
-        {
-            public string label { get; }
-            public bool value { get; }
-            public Action<bool> onChange { get; }
-            public string on { get; }
-            public string off { get; }
-
-            public ToggleData(string label, bool value, Action<bool> onChange)
-            {
-                this.label = label;
-                this.value = value;
-                this.onChange = onChange;
-            }
-
-            public ToggleData(string label, bool value, string on, string off, Action<bool> onChange) : this(label, value, onChange)
-            {
-                this.on = on;
-                this.off = off;
+                Label = label;
+                Menu = menu;
+                OnClick = onClick;
+                Visible = visible;
             }
         }
 
         /// <summary>
-        /// A struct representing a slider option.
+        /// A class representing a menu text option.
         /// </summary>
-        public struct SliderData : IOptionData
+        public class MenuText : MenuOption
         {
-            public string label { get; }
-            public object[] steps { get; }
-            public int value { get; }
-            public Action<int> onChange { get; }
-
-            public SliderData(string label, object[] steps, int value, Action<int> onChange)
+            /// <summary>
+            /// Create a menu text.
+            /// </summary>
+            /// <param name="label">Text label.</param>
+            /// <param name="visible">Text visibility.</param>
+            public MenuText(I18nKey label, bool visible = true)
             {
-                this.label = label;
-                this.steps = steps;
-                this.value = value;
-                this.onChange = onChange;
+                Label = label;
+                Visible = visible;
             }
         }
 
         /// <summary>
-        /// A struct representing a text input.
+        /// A class representing a menu select option.
         /// </summary>
-        public struct InputTextData : IOptionData
+        public class MenuSelect : MenuOption
         {
-            public string label { get; }
-            public string text { get; }
-            public Action<string> onInput { get; }
+            /// <summary>
+            /// Select values.
+            /// </summary>
+            public I18nKey[] Values { get; private set; }
+            /// <summary>
+            /// Select value.
+            /// </summary>
+            public int Value { get; private set; }
+            /// <summary>
+            /// Select change action.
+            /// </summary>
+            public Action<int> OnChange { get; private set; }
 
-            public InputTextData(string label, Action<string> onInput)
+            /// <summary>
+            /// Create a menu select.
+            /// </summary>
+            /// <param name="label">Select label.</param>
+            /// <param name="values">Select values.</param>
+            /// <param name="value">Select value.</param>
+            /// <param name="onChange">Select change action.</param>
+            /// <param name="visible">Select visibility.</param>
+            public MenuSelect(I18nKey label, I18nKey[] values, int value = 0, Action<int> onChange = null, bool visible = true)
             {
-                this.label = label;
-                this.onInput = onInput;
+                Label = label;
+                Values = values;
+                Value = value;
+                OnChange = onChange;
+                Visible = visible;
             }
 
-            public InputTextData(string label, string text, Action<string> onInput) : this(label, onInput)
+            /// <summary>
+            /// Change select values
+            /// </summary>
+            /// <param name="values"></param>
+            public void SetValues(I18nKey[] values)
             {
-                this.text = text;
+                Values = values;
+                Update();
+            }
+
+            /// <summary>
+            /// Change select value
+            /// </summary>
+            /// <param name="value"></param>
+            public void SetValue(int value)
+            {
+                Value = value;
+                Update();
+            }
+        }
+
+        /// <summary>
+        /// A class representing a menu toggle option.
+        /// </summary>
+        public class MenuToggle : MenuOption
+        {
+            /// <summary>
+            /// Toggle value.
+            /// </summary>
+            public bool Value { get; private set; }
+            /// <summary>
+            /// Toggle on label.
+            /// </summary>
+            public I18nKey On { get; private set; }
+            /// <summary>
+            /// Toggle off label.
+            /// </summary>
+            public I18nKey Off { get; private set; }
+            /// <summary>
+            /// Toggle change action.
+            /// </summary>
+            public Action<bool> OnChange { get; private set; }
+
+            /// <summary>
+            /// Create a menu toggle.
+            /// </summary>
+            /// <param name="label">Toggle label.</param>
+            /// <param name="value">Toggle value.</param>
+            /// <param name="on">Toggle on label.</param>
+            /// <param name="off">Toggle off label.</param>
+            /// <param name="onChange">Toggle change action.</param>
+            /// <param name="visible">Toggle visibility.</param>
+            public MenuToggle(I18nKey label, bool value = true, I18nKey on = null, I18nKey off = null, Action<bool> onChange = null, bool visible = true)
+            {
+                Label = label;
+                Value = value;
+                On = on;
+                Off = off;
+                OnChange = onChange;
+                Visible = visible;
+            }
+
+            /// <summary>
+            /// Change toggle value
+            /// </summary>
+            /// <param name="value"></param>
+            public void SetValue(bool value)
+            {
+                Value = value;
+                Update();
+            }
+
+            /// <summary>
+            /// Change toggle on label
+            /// </summary>
+            /// <param name="on"></param>
+            public void SetOn(I18nKey on)
+            {
+                On = on;
+                Update();
+            }
+
+            /// <summary>
+            /// Change toggle off label
+            /// </summary>
+            /// <param name="off"></param>
+            public void SetOff(I18nKey off)
+            {
+                Off = off;
+                Update();
+            }
+        }
+
+        /// <summary>
+        /// A class representing a menu slider option.
+        /// </summary>
+        public class MenuSlider : MenuOption
+        {
+            /// <summary>
+            /// Slider steps.
+            /// </summary>
+            public object[] Steps { get; private set; }
+            /// <summary>
+            /// Slider value.
+            /// </summary>
+            public int Value { get; private set; }
+            /// <summary>
+            /// Slider change action.
+            /// </summary>
+            public Action<int> OnChange { get; private set; }
+
+            /// <summary>
+            /// Create a menu slider.
+            /// </summary>
+            /// <param name="label">Slider label.</param>
+            /// <param name="steps">Slider steps.</param>
+            /// <param name="value">Slider value.</param>
+            /// <param name="onChange">Slider change action.</param>
+            /// <param name="visible">Slider visibility.</param>
+            public MenuSlider(I18nKey label, object[] steps, int value = 0, Action<int> onChange = null, bool visible = true)
+            {
+                Label = label;
+                Steps = steps;
+                Value = value;
+                OnChange = onChange;
+                Visible = visible;
+            }
+
+            /// <summary>
+            /// Change slider steps.
+            /// </summary>
+            /// <param name="steps">Slider steps.</param>
+            public void SetSteps(object[] steps)
+            {
+                Steps = steps;
+                Update();
+            }
+
+            /// <summary>
+            /// Change slider value.
+            /// </summary>
+            /// <param name="value">Slider value.</param>
+            public void SetValue(int value)
+            {
+                Value = value;
+                Update();
+            }
+        }
+
+        /// <summary>
+        /// A class representing a menu text input.
+        /// </summary>
+        public class MenuTextInput : MenuOption
+        {
+            /// <summary>
+            /// Text input text.
+            /// </summary>
+            public string Text { get; private set; }
+            /// <summary>
+            /// Text input max characters value.
+            /// </summary>
+            public int Max { get; private set; }
+            /// <summary>
+            /// Text input action.
+            /// </summary>
+            public Action<string> OnInput { get; private set; }
+
+            /// <summary>
+            /// Create a menu text input.
+            /// </summary>
+            /// <param name="label">Text input label.</param>
+            /// <param name="text">Text input text.</param>
+            /// <param name="max">Text input max characters value.</param>
+            /// <param name="onInput">Text input action.</param>
+            /// <param name="visible">Text input visibility.</param>
+            public MenuTextInput(I18nKey label, string text = "", int max = 0, Action<string> onInput = null, bool visible = true)
+            {
+                Label = label;
+                Text = text;
+                Max = max;
+                OnInput = onInput;
+                Visible = visible;
+            }
+
+            /// <summary>
+            /// Change text input value.
+            /// </summary>
+            /// <param name="text">Text input value.</param>
+            public void SetText(string text)
+            {
+                Text = text;
+                Update();
+            }
+
+            /// <summary>
+            /// Change text input max characters count.
+            /// </summary>
+            /// <param name="max">Max characters value.</param>
+            public void SetMax(int max)
+            {
+                Max = max;
+                Update();
             }
         }
     }

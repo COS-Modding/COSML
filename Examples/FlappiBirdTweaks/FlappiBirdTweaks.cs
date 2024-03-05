@@ -1,6 +1,6 @@
 ﻿using COSML.Modding;
 using System.Collections.Generic;
-using static COSML.Menu.MenuUtils;
+using static COSML.MainMenu.MenuUtils;
 
 namespace FlappiBirdTweaks
 {
@@ -25,8 +25,8 @@ namespace FlappiBirdTweaks
         private float orig_downSpeed;
 
         // Differents speeds of the bird
-        private float[] speedValues = new float[] { 0.25f, 0.5f, 0.75f, 1f, 2f, 4f, 8f };
-        private object[] speedSteps = new object[] { "x¼", "x½", "x¾", "x1", "x2", "x4", "x8" };
+        private float[] speedValues = [0.25f, 0.5f, 0.75f, 1f, 2f, 4f, 8f];
+        private object[] speedSteps = ["x¼", "x½", "x¾", "x1", "x2", "x4", "x8"];
 
         private bool loaded;
 
@@ -92,23 +92,20 @@ namespace FlappiBirdTweaks
             }
         }
 
-        public List<IOptionData> GetMenu()
-        {
-            // Mod menu to easily edit values
-            return new List<IOptionData> {
-                new SliderData(
-                    "Up speed",
-                    speedSteps,
-                    localData.upSpeed,
-                    (newIndex) => UpdateSpeed(true, newIndex)
-                ),
-                new SliderData(
-                    "Down speed",
-                    speedSteps,
-                    localData.downSpeed,
-                    (newIndex) => UpdateSpeed(false, newIndex)
-                )
-            };
-        }
+        // Mod menu to easily edit values
+        public IList<MenuOption> GetMenu() => new List<MenuOption> {
+            new MenuSlider(
+                "Up speed",
+                speedSteps,
+                localData.upSpeed,
+                (newIndex) => UpdateSpeed(true, newIndex)
+            ),
+            new MenuSlider(
+                "Down speed",
+                speedSteps,
+                localData.downSpeed,
+                (newIndex) => UpdateSpeed(false, newIndex)
+            )
+        };
     }
 }

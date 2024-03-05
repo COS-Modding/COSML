@@ -1,56 +1,33 @@
 namespace COSML.Log
 {
     /// <summary>
-    /// What level should logs be done at?
+    /// Level logs should be done at.
     /// </summary>
     public enum LogLevel
     {
         /// <summary>
-        /// Debug Level of Logging - Mostly Developers Only
+        /// Debug level of logging - mostly developers only.
         /// </summary>
         Debug,
 
         /// <summary>
-        /// Normal Logging Level
+        /// Normal logging Level.
         /// </summary>
         Info,
 
         /// <summary>
-        /// Only Show Warnings and Above
+        /// Only show warnings and above.
         /// </summary>
         Warn,
 
         /// <summary>
-        /// Only Show Full Errors
+        /// Only show full errors.
         /// </summary>
         Error,
 
         /// <summary>
-        /// No Logging at all
+        /// No logging at all.
         /// </summary>
         Off
-    }
-
-    /// <summary>
-    /// Methods for the logging level enum
-    /// </summary>
-    public static class LogLevelExt
-    {
-        /// <summary>
-        /// Converts the logging level enum into a short string.
-        /// </summary>
-        /// <param name="level">The logging level</param>
-        /// <returns>A 1 character string of the value of the enum</returns>
-        public static string ToShortString(LogLevel level)
-        {
-            return level switch
-            {
-                LogLevel.Debug => "D",
-                LogLevel.Info => "I",
-                LogLevel.Warn => "W",
-                LogLevel.Error => "E",
-                _ => ""
-            };
-        }
     }
 }

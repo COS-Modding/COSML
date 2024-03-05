@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace COSML
 {
@@ -30,7 +31,7 @@ namespace COSML
             return GetGameObjectFromArray(scene.GetRootGameObjects(), objName);
         }
 
-        internal static GameObject GetGameObjectFromArray(GameObject[] objects, string objName)
+        private static GameObject GetGameObjectFromArray(GameObject[] objects, string objName)
         {
             // Split object name into root and child names based on '/'
             string rootName;
@@ -63,6 +64,38 @@ namespace COSML
             }
 
             return obj;
+        }
+
+        /// <summary>
+        /// Get the max width of a text.
+        /// </summary>
+        /// <param name="text">Text on which to test.</param>
+        /// <param name="values">Values to test the width.</param>
+        /// <returns></returns>
+        public static float FindGreatestWidth(Text text, object[] values)
+        {
+            float width = 0;
+
+            foreach (object val in values)
+            {
+                text.text = val is I18nKey valKey ? I18n.Get(valKey) : val.ToString();
+                width = Math.Max(width, text.preferredWidth);
+            }
+
+            return width;
+        }
+
+        /// <summary>
+        /// Destroy a gameobject's children by condition.
+        /// </summary>
+        /// <param name="parent">GameObject parent.</param>
+        /// <param name="condition">Condition for destroying children.</param>
+        public static void ClearChildren(this GameObject parent, Func<GameObject, bool> condition)
+        {
+            foreach (Transform child in parent.transform)
+            {
+                if (condition(child.gameObject)) UnityEngine.Object.Destroy(child.gameObject);
+            }
         }
     }
 }

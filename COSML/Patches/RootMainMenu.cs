@@ -1,6 +1,8 @@
+#pragma warning disable IDE0044, IDE0060
+
 using MonoMod;
 using UnityEngine;
-using static COSML.Menu.MenuUtils;
+using static COSML.MainMenu.MenuUtils;
 
 namespace COSML.Patches
 {
@@ -18,14 +20,14 @@ namespace COSML.Patches
         {
             // Add mods button
             GameObject mainMenuGo = GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Principal");
-            modButton = CreateRootButton(new InternalButtonData
+            modButton = CreateRootButton(new ButtonData
             {
                 parent = mainMenuGo.transform,
                 menu = this,
-                label = "MODS",
-                buttonId = 2,
-                position = 2
+                label = new I18nKey("cosml.menu.mods"),
+                buttonId = 2
             });
+            modButton.transform.localPosition = GetRootButtonLocalPosition(2);
 
             // Edit quit button
             GameObject quitButtonGo = mainMenuGo.transform.Find($"Bouton Quit").gameObject;
@@ -34,7 +36,6 @@ namespace COSML.Patches
             quitMainMenuButton.buttonId = 3;
         }
 
-        public extern void orig_Loop();
         public new void Loop()
         {
             if (gameObject.activeSelf)
@@ -49,7 +50,6 @@ namespace COSML.Patches
             }
         }
 
-        public extern void orig_Show();
         public new void Show(AbstractMainMenu previousMenu)
         {
             if (!gameObject.activeSelf)
@@ -70,7 +70,6 @@ namespace COSML.Patches
             }
         }
 
-        public extern void orig_ForceExit();
         public new void ForceExit()
         {
             playButton.ForceExit();
@@ -82,25 +81,24 @@ namespace COSML.Patches
             }
         }
 
-        public extern void orig_OnClic(int buttonId);
         public new void OnClic(int buttonId)
         {
             GameController instance = (GameController)GameController.GetInstance();
             InputsController inputsController = instance.GetInputsController();
-            UIController uIController = (UIController)instance.GetUIController();
+            Patches.MainMenu mainMenu = (Patches.MainMenu)instance.GetUIController().mainMenu;
             switch (buttonId)
             {
                 case 0:
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    uIController.mainMenu.Swap(uIController.mainMenu.selectSaveMenu, true);
+                    mainMenu.Swap(mainMenu.selectSaveMenu, true);
                     break;
                 case 1:
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    uIController.mainMenu.Swap(uIController.mainMenu.optionMenu, true);
+                    mainMenu.Swap(mainMenu.optionMenu, true);
                     break;
                 case 2:
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    uIController.mainMenu.Swap(uIController.mainMenu.modMenu, true);
+                    mainMenu.Swap(mainMenu.modMenu, true);
                     break;
                 case 3:
                     inputsController.DisplayCursor(false);
@@ -111,29 +109,28 @@ namespace COSML.Patches
             }
         }
 
-        public extern AbstractUIBrowser orig_GetBrowser();
         public new AbstractUIBrowser GetBrowser()
         {
             if (browser != null) return browser;
 
             if (canQuitApplication)
             {
-                browser = new UIBrowser(GetBrowserId(), new OverableUI[4][]
-                {
-                    new OverableUI[1] { playButton },
-                    new OverableUI[1] { optionButton },
-                    new OverableUI[1] { modButton },
-                    new OverableUI[1] { quitButton }
-                }, 0, 0);
+                browser = new UIBrowser(GetBrowserId(),
+                [
+                    [playButton],
+                    [optionButton],
+                    [modButton],
+                    [quitButton]
+                ], 0, 0);
             }
             else
             {
-                browser = new UIBrowser(GetBrowserId(), new OverableUI[3][]
-                {
-                    new OverableUI[1] { playButton },
-                    new OverableUI[1] { optionButton },
-                    new OverableUI[1] { modButton }
-                }, 0, 0);
+                browser = new UIBrowser(GetBrowserId(),
+                [
+                    [playButton],
+                    [optionButton],
+                    [modButton]
+                ], 0, 0);
             }
 
             return browser;

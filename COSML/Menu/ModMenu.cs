@@ -1,10 +1,11 @@
+using COSML.Components.Keyboard;
 using COSML.Log;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static COSML.Menu.MenuUtils;
+using static COSML.MainMenu.MenuUtils;
 
-namespace COSML.Menu
+namespace COSML.MainMenu
 {
     public class ModMenu : IMainMenu
     {
@@ -12,21 +13,26 @@ namespace COSML.Menu
         public AbstractMainMenu parentMenu;
         public Action onBack;
 
-        private Dictionary<int, MonoBehaviour> options;
-        private Dictionary<int, IOptionData> optionsData;
-        private Dictionary<int, ModMenu> optionsMenu;
+        private Dictionary<int, MonoBehaviour> optionsMono;
+        private Dictionary<int, MenuOption> menuOptions;
+        private Dictionary<int, ModMenu> menus;
+        private List<I18nText> i18nTexts;
 
         public override void Init() { }
 
-        public void Init(List<IOptionData> menuOptions)
+        public void Init(IList<MenuOption> options)
         {
+            optionsMono = [];
+            menuOptions = [];
+            menus = [];
+            i18nTexts = [];
+
+            pagination = gameObject.AddComponent<MainMenuPagination>();
+            pagination.menu = this;
+
             try
             {
-                pagination = gameObject.AddComponent<MainMenuPagination>();
-                pagination.menu = this;
-                pagination.Init();
-
-                AddModOptions(menuOptions);
+                AddModOptions(options);
             }
             catch (Exception ex)
             {
@@ -34,119 +40,151 @@ namespace COSML.Menu
             }
         }
 
-        private void AddModOptions(List<IOptionData> menuOptions)
+        private void AddModOptions(IList<MenuOption> options)
         {
-            options = new Dictionary<int, MonoBehaviour>();
-            optionsData = new Dictionary<int, IOptionData>();
-            optionsMenu = new Dictionary<int, ModMenu>();
+            optionsMono.Clear();
+            menuOptions.Clear();
+            menus.Clear();
+            i18nTexts.Clear();
 
-            int modIndex = 0;
-            foreach (IOptionData modOption in menuOptions)
+            int optionIndex = 0;
+            foreach (MenuOption modOption in options)
             {
                 MonoBehaviour option;
-                if (modOption is ButtonData buttonData)
+                if (modOption is MenuUtils.MenuButton buttonData)
                 {
-                    bool hasSubMenu = buttonData.menu.HasValue;
-                    if (hasSubMenu)
-                    {
-                        MenuData menuData = buttonData.menu.Value;
-                        ModMenu modMenu = CreateMenu<ModMenu>(new InternalMenuData()
-                        {
-                            label = menuData.label,
-                            parent = this,
-                            options = menuData.options,
-                            onBack = menuData.onBack
-                        });
-                        optionsMenu[modIndex] = modMenu;
-                    }
-                    option = CreateButton(new InternalButtonData
+                    option = CreateButton(new ButtonData
                     {
                         parent = transform,
                         menu = this,
-                        buttonId = modIndex,
-                        position = modIndex,
-                        label = buttonData.label,
-                        arrow = hasSubMenu
+                        buttonId = optionIndex,
+                        label = buttonData.Label,
+                        arrow = buttonData.Menu != null,
+                        visible = buttonData.Visible
                     });
                 }
-                else if (modOption is TextData textData)
+                else if (modOption is MenuUtils.MenuText textData)
                 {
-                    option = CreateText(new InternalTextData
+                    option = CreateText(new TextData
                     {
                         parent = transform,
                         menu = this,
-                        position = modIndex,
-                        label = textData.label
+                        label = textData.Label,
+                        visible = textData.Visible
                     });
                 }
-                else if (modOption is SelectData selectData)
+                else if (modOption is MenuSelect selectData)
                 {
-                    option = CreateSelect(new InternalSelectData
+                    option = CreateSelect(new SelectData
                     {
                         parent = transform,
                         menu = this,
-                        buttonId = modIndex,
-                        position = modIndex,
-                        label = selectData.label,
-                        values = selectData.values,
-                        value = selectData.value
+                        buttonId = optionIndex,
+                        label = selectData.Label,
+                        values = selectData.Values,
+                        value = selectData.Value,
+                        visible = selectData.Visible
                     });
                 }
-                else if (modOption is ToggleData toggleData)
+                else if (modOption is MenuToggle toggleData)
                 {
-                    option = CreateToggle(new InternalToggleData
+                    option = CreateToggle(new ToggleData
                     {
                         parent = transform,
                         menu = this,
-                        buttonId = modIndex,
-                        position = modIndex,
-                        label = toggleData.label,
-                        on = toggleData.on,
-                        off = toggleData.off,
-                        value = toggleData.value
+                        buttonId = optionIndex,
+                        label = toggleData.Label,
+                        on = toggleData.On,
+                        off = toggleData.Off,
+                        value = toggleData.Value,
+                        visible = toggleData.Visible
                     });
                 }
-                else if (modOption is SliderData sliderData)
+                else if (modOption is MenuUtils.MenuSlider sliderData)
                 {
-                    option = CreateSlider(new InternalSliderData
+                    option = CreateSlider(new SliderData
                     {
                         parent = transform,
                         menu = this,
-                        buttonId = modIndex,
-                        position = modIndex,
-                        label = sliderData.label,
-                        steps = sliderData.steps,
-                        value = sliderData.value
+                        buttonId = optionIndex,
+                        label = sliderData.Label,
+                        steps = sliderData.Steps,
+                        value = sliderData.Value,
+                        visible = sliderData.Visible
                     });
                 }
-                else if (modOption is InputTextData inputData)
+                else if (modOption is MenuTextInput inputData)
                 {
-                    MainMenuInputButton inputText = CreateInputText(new InternalInputTextData
+                    MainMenuInputText inputText = CreateInputText(new InputTextData
                     {
                         parent = transform,
                         menu = this,
-                        buttonId = modIndex,
-                        position = modIndex,
-                        label = inputData.label,
-                        text = inputData.text
+                        buttonId = optionIndex,
+                        label = inputData.Label,
+                        text = inputData.Text,
+                        max = inputData.Max,
+                        visible = inputData.Visible
                     });
                     option = inputText;
-                    MainMenuInputButton.ValueChangedHook += (string value) =>
-                    {
-                        inputData.onInput?.Invoke(value);
-                    };
+                    inputText.ValueChangedHook += v => inputData.OnInput?.Invoke(v);
                 }
                 else
                 {
                     continue;
                 }
 
-                options.Add(modIndex, option);
-                optionsData.Add(modIndex, modOption);
-                modIndex++;
+                optionsMono.Add(optionIndex, option);
+                menuOptions.Add(optionIndex, modOption);
+                optionIndex++;
 
-                pagination?.AddElement(option.gameObject);
+                modOption.UpdateHook += (data) =>
+                {
+                    UpdateOption(option, data.Label);
+
+                    if (data is MenuSelect selectData)
+                    {
+                        UpdateSelect((Patches.MainMenuSelector)option, new SelectData
+                        {
+                            values = selectData.Values,
+                            value = selectData.Value
+                        });
+                    }
+                    else if (data is MenuToggle toggleData)
+                    {
+                        UpdateToggle((Patches.MainMenuSelector)option, new ToggleData
+                        {
+                            on = toggleData.On,
+                            off = toggleData.Off,
+                            value = toggleData.Value
+                        });
+                    }
+                    else if (data is MenuUtils.MenuSlider sliderData)
+                    {
+                        UpdateSlider((Patches.MainMenuSlider)option, new SliderData
+                        {
+                            steps = sliderData.Steps,
+                            value = sliderData.Value
+                        });
+                    }
+                    else if (data is MenuTextInput inputTextData)
+                    {
+                        UpdateInputText((MainMenuInputText)option, new InputTextData
+                        {
+                            text = inputTextData.Text,
+                            max = inputTextData.Max,
+                        });
+                    }
+                };
+
+                option.gameObject.SetActive(modOption.Visible);
+                modOption.VisibleHook += visible =>
+                {
+                    option.gameObject.SetActive(visible);
+                    Refresh();
+                };
             }
+
+            pagination.Init([.. optionsMono.Values]);
         }
 
         public override void Loop()
@@ -154,14 +192,14 @@ namespace COSML.Menu
             if (gameObject.activeSelf)
             {
                 backButton.Loop();
-                pagination?.Loop();
-                foreach (MonoBehaviour option in options.Values)
+                pagination.Loop();
+                foreach (MonoBehaviour option in optionsMono.Values)
                 {
-                    option.GetComponent<MainMenuButton>()?.Loop();
+                    option.GetComponent<Patches.MainMenuButton>()?.Loop();
                     option.GetComponent<MainMenuText>()?.Loop();
                     option.GetComponent<MainMenuSelector>()?.Loop();
                     option.GetComponent<MainMenuSlider>()?.Loop();
-                    option.GetComponent<MainMenuInputButton>()?.Loop();
+                    option.GetComponent<MainMenuInputText>()?.Loop();
                 }
             }
         }
@@ -173,73 +211,81 @@ namespace COSML.Menu
                 gameObject.SetActive(true);
                 backButton.InitRoll();
                 backButton.Loop();
-                pagination?.InitRoll();
-                foreach (MonoBehaviour option in options.Values)
+                pagination.InitRoll();
+                foreach (MonoBehaviour option in optionsMono.Values)
                 {
-                    option.GetComponent<MainMenuButton>()?.InitRoll();
+                    option.GetComponent<Patches.MainMenuButton>()?.InitRoll();
                     option.GetComponent<MainMenuText>()?.InitRoll();
                     option.GetComponent<MainMenuSelector>()?.InitRoll();
                     option.GetComponent<MainMenuSlider>()?.InitRoll();
-                    option.GetComponent<MainMenuInputButton>()?.InitRoll();
+                    option.GetComponent<MainMenuInputText>()?.InitRoll();
                 }
+                Refresh();
             }
         }
 
         public override void ForceExit()
         {
             backButton.ForceExit();
-            pagination?.ForceExit();
-            foreach (MonoBehaviour option in options.Values)
+            pagination.ForceExit();
+            foreach (MonoBehaviour option in optionsMono.Values)
             {
-                option.GetComponent<MainMenuButton>()?.ForceExit();
+                option.GetComponent<Patches.MainMenuButton>()?.ForceExit();
                 option.GetComponent<MainMenuText>()?.ForceExit();
                 option.GetComponent<MainMenuSelector>()?.ForceExit();
                 option.GetComponent<MainMenuSlider>()?.ForceExit();
-                option.GetComponent<MainMenuInputButton>()?.ForceExit();
+                option.GetComponent<MainMenuInputText>()?.ForceExit();
             }
         }
 
         public override void OnClic(int buttonId)
         {
-            if (buttonId < 0) return;
+            GameController instance = GameController.GetInstance();
+            if (UIKeyboard.GetInstance()?.IsOpen() ?? false) return;
 
-            if (buttonId < OPTION_MENU_MAX_PER_PAGE)
+            if (buttonId >= 0)
             {
-                GameController instance = GameController.GetInstance();
-                UIController uicontroller = instance.GetUIController();
-                MonoBehaviour modOption = options[buttonId];
-                IOptionData optionData = optionsData[buttonId];
+                MonoBehaviour modOption = optionsMono[buttonId];
+                MenuOption optionData = menuOptions[buttonId];
 
-                if (modOption is MainMenuButton)
+                if (modOption is Patches.MainMenuButton)
                 {
-                    ButtonData buttonData = (ButtonData)optionData;
+                    MenuUtils.MenuButton buttonData = (MenuUtils.MenuButton)optionData;
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    if (buttonData.menu.HasValue)
+                    buttonData.OnClick?.Invoke();
+                    MenuUtils.MenuMain menu = buttonData.Menu;
+                    if (menu != null)
                     {
-                        uicontroller.mainMenu.Swap(optionsMenu[buttonId], true);
-                    }
-                    else
-                    {
-                        buttonData.onClick();
+                        if (menus.ContainsKey(buttonId)) DestroyImmediate(menus[buttonId].gameObject);
+                        ModMenu modMenu = CreateMenu<ModMenu>(new MenuData
+                        {
+                            name = $"{name}_{menu.Id}",
+                            label = menu.Label,
+                            parent = this,
+                            options = menu.Options,
+                            onBack = menu.OnBack
+                        });
+                        menus[buttonId] = modMenu;
+                        instance.GetUIController().mainMenu.Swap(modMenu, true);
                     }
                 }
                 else if (modOption is MainMenuSelector modSelect)
                 {
-                    if (optionData is SelectData selectData)
+                    if (optionData is MenuSelect selectData)
                     {
-                        selectData.onChange(modSelect.GetCurrentValue());
+                        selectData.OnChange?.Invoke(modSelect.GetCurrentValue());
                     }
-                    else if (optionData is ToggleData toggleData)
+                    else if (optionData is MenuToggle toggleData)
                     {
-                        toggleData.onChange(modSelect.GetCurrentValue() == 1);
+                        toggleData.OnChange?.Invoke(modSelect.GetCurrentValue() == 1);
                     }
                 }
                 else if (modOption is Patches.MainMenuSlider modSlider)
                 {
                     if (modSlider.HasUpdated())
                     {
-                        SliderData sliderData = (SliderData)optionData;
-                        sliderData.onChange(modSlider.GetCurrentValue());
+                        MenuUtils.MenuSlider sliderData = (MenuUtils.MenuSlider)optionData;
+                        sliderData.OnChange?.Invoke(modSlider.GetCurrentValue());
                     }
                 }
             }
@@ -253,26 +299,14 @@ namespace COSML.Menu
 
         public override AbstractUIBrowser GetBrowser()
         {
-            OverableUI[][] overableUI = pagination?.GetOverableUI();
+            OverableUI[][] overableUIs = pagination.GetOverableUI();
+            browser = new Patches.UIBrowser(GetBrowserId(), overableUIs, GetBrowserIndex(overableUIs.Length), 0);
+            return browser;
+        }
 
-            if (overableUI == null)
-            {
-                int index = 0;
-                overableUI = new OverableUI[options.Count][];
-                foreach (MonoBehaviour option in options.Values)
-                {
-                    OverableUI optionOver = option.GetComponent<MainMenuButton>();
-                    optionOver ??= option.GetComponent<MainMenuText>()?.over;
-                    optionOver ??= option.GetComponent<MainMenuSelector>()?.over;
-                    optionOver ??= option.GetComponent<MainMenuSlider>()?.over;
-                    optionOver ??= option.GetComponent<MainMenuInputButton>()?.over;
-
-                    overableUI[index] = new OverableUI[1] { optionOver };
-                    index++;
-                }
-            }
-
-            return new UIBrowser(GetBrowserId(), overableUI, 0, 0);
+        public void SetIndex(int i, int j)
+        {
+            browser?.ResetPosition(i, j);
         }
 
         public override void GoToPreviousMenu()
@@ -284,8 +318,11 @@ namespace COSML.Menu
             onBack?.Invoke();
         }
 
-        public void ResetBrowser() { }
-
         public override void Translate(I18nType i18n, I18nPlateformType i18nPlateformType) { }
+
+        public void OnDestroy()
+        {
+            foreach (MenuOption modOption in menuOptions.Values) modOption.ResetEvents();
+        }
     }
 }

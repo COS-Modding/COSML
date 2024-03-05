@@ -1,18 +1,19 @@
-﻿using COSML.Log;
+﻿using COSML.Components.Keyboard;
 using System;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace COSML.Menu
+namespace COSML.MainMenu
 {
-    public class MainMenuInputButton : MonoBehaviour
+    public class MainMenuInputText : MonoBehaviour
     {
         public AbstractMainMenu menu;
         public InputField input;
         public Text valueText;
-        public MainMenuInputButtonOver over;
-        public MainMenuInputButtonOver inputOver;
+        public Text counterText;
+        public int maxChar = 0;
+        public MainMenuInputTextOver over;
+        public MainMenuInputTextOver inputOver;
         public Animator overAnimator;
 
         protected bool onOver;
@@ -58,40 +59,37 @@ namespace COSML.Menu
             }
         }
 
+        public void Show()
+        {
+            Keyboard.Open(input.text, maxChar, value => input.text = value);
+
+            input.caretPosition = input.text.Length;
+            input.selectionFocusPosition = input.caretPosition;
+            input.selectionAnchorPosition = input.caretPosition;
+        }
+
         public bool IsOver()
         {
             return onOver;
         }
 
-        public static event Action<string> ValueChangedHook;
-        internal static void OnValueChanged(string text)
+        public event Action<string> ValueChangedHook;
+        private void OnValueChanged(string text)
         {
-            if (ValueChangedHook == null) return;
-
-            Delegate[] invocationList = ValueChangedHook.GetInvocationList();
-            foreach (Action<string> toInvoke in invocationList.Cast<Action<string>>())
-            {
-                try
-                {
-                    toInvoke.Invoke(text);
-                }
-                catch (Exception ex)
-                {
-                    Logging.API.Error(ex);
-                }
-            }
+            counterText.text = $"{text.Length}/{maxChar}";
+            ValueChangedHook?.Invoke(text);
         }
 
     }
 
-    public class MainMenuInputButtonOver : PointableUI, OverableUI, OverableInteractive
+    public class MainMenuInputTextOver : PointableUI, OverableUI, OverableInteractive
     {
-        private MainMenuInputButton selector;
+        private MainMenuInputText input;
         private bool isOver;
 
-        public void Init(MainMenuInputButton newSelector)
+        public void Init(MainMenuInputText newInput)
         {
-            selector = newSelector;
+            input = newInput;
             InitRoll();
         }
 
@@ -113,16 +111,13 @@ namespace COSML.Menu
 
         public bool AutoExit(bool forceExit)
         {
-            if (forceExit)
-            {
-                ForceExit();
-            }
-
+            if (forceExit) ForceExit();
             return forceExit;
         }
 
         public void CheckClick()
         {
+            if (GameController.GetInstance().GetInputsController().OnUiClic()) input.Show();
         }
 
         public bool IsDisplayed()
@@ -146,7 +141,7 @@ namespace COSML.Menu
             {
                 GameController instance = GameController.GetInstance();
                 instance.GetInputsController().EnterUI(this);
-                if (!selector.IsOver())
+                if (!input.IsOver())
                 {
                     instance.PlayGlobalSound("Play_menu_hover", true);
                 }

@@ -20,7 +20,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the debug level.  Includes the Mod's name in the output.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public void Debug(string message)
         {
             Logging.Debug(FormatLogMessage(message));
@@ -30,7 +30,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the debug level.  Includes the Mod's name in the output.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public void Debug(object message)
         {
             Logging.Debug(FormatLogMessage(message));
@@ -40,7 +40,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the info level.  Includes the Mod's name in the output.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public void Info(string message)
         {
             Logging.Info(FormatLogMessage(message));
@@ -50,7 +50,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the info level.  Includes the Mod's name in the output.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public void Info(object message)
         {
             Logging.Info(FormatLogMessage(message));
@@ -60,7 +60,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the warn level.  Includes the Mod's name in the output.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public void Warn(string message)
         {
             Logging.Warn(FormatLogMessage(message));
@@ -70,7 +70,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the warn level.  Includes the Mod's name in the output.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public void Warn(object message)
         {
             Logging.Warn(FormatLogMessage(message));
@@ -80,7 +80,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the error level.  Includes the Mod's name in the output.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public void Error(string message)
         {
             Logging.Error(FormatLogMessage(message));
@@ -90,7 +90,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the error level.  Includes the Mod's name in the output.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public void Error(object message)
         {
             Logging.Error(FormatLogMessage(message));

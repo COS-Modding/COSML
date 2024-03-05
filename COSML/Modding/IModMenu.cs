@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using static COSML.Menu.MenuUtils;
+using static COSML.MainMenu.MenuUtils;
 
 namespace COSML.Modding
 {
@@ -12,6 +12,6 @@ namespace COSML.Modding
         /// Gets the data for the custom menu.
         /// </summary>
         /// <returns></returns>
-        public List<IOptionData> GetMenu();
+        public IList<MenuOption> GetMenu();
     }
 }

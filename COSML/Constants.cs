@@ -9,7 +9,7 @@ namespace COSML
         public const string GLOBAL_CANVAS_PATH = "GameController(Clone)/UIController/GlobalCanevas";
         public const string MAIN_MENU_PATH = GLOBAL_CANVAS_PATH + "/MainMenu";
 
-        public const int BACK_BUTTON_ID = 100;
-        public const int PAGINATION_BUTTON_ID = 101;
+        public const int BACK_BUTTON_ID = -1;
+        public const int PAGINATION_BUTTON_ID = -2;
     }
 }

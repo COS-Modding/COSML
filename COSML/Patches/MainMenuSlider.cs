@@ -1,4 +1,5 @@
 ﻿using MonoMod;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,12 +18,12 @@ namespace COSML.Patches
 
         public Text valueText;
 
-        private string[] values;
+        private I18nKey[] values;
         private bool updateValue;
 
-        public void SetValues(string[] newValues)
+        public void SetValues(object[] newValues)
         {
-            values = newValues;
+            values = [.. newValues.Select(v => v is I18nKey vKey ? vKey : v.ToString())];
             SetCurrentValue(currentValue, false);
         }
 
@@ -39,15 +40,9 @@ namespace COSML.Patches
             left.UpdateImage();
             right.UpdateImage();
 
-            if (launchEventMenu)
-            {
-                menu.OnClic(buttonId);
-            }
+            if (launchEventMenu) menu.OnClic(buttonId);
 
-            if (valueText != null && values != null)
-            {
-                valueText.text = values[currentValue];
-            }
+            if (valueText != null && values != null) valueText.text = I18n.Get(values[currentValue]);
         }
 
         public bool HasUpdated()
@@ -132,6 +127,11 @@ namespace COSML.Patches
             }
 
             UpdateCursor();
+        }
+
+        internal void Translate()
+        {
+            SetCurrentValue(currentValue, false);
         }
     }
 }

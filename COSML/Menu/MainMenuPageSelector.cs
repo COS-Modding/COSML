@@ -1,7 +1,8 @@
-﻿using UnityEngine;
+﻿using COSML.Components.Keyboard;
+using UnityEngine;
 using UnityEngine.UI;
 
-namespace COSML.Menu
+namespace COSML.MainMenu
 {
     public class MainMenuPageSelector : AbstractMainMenuSelector
     {
@@ -62,7 +63,8 @@ namespace COSML.Menu
             left.LoopRoll();
             right.LoopRoll();
 
-            InputsController inputsController = GameController.GetInstance().GetInputsController();
+            GameController instance = GameController.GetInstance();
+            InputsController inputsController = instance.GetInputsController();
             InputsController.ControllerType controllerType = inputsController.GetControllerType();
             padIndics.gameObject.SetActive(controllerType != InputsController.ControllerType.MOUSE);
             if (padIndics.gameObject.activeSelf)
@@ -73,8 +75,9 @@ namespace COSML.Menu
                 nextPagePicto.sprite = MenuResources.RBButtonSprites[(int)controllerType];
             }
 
+            if (UIKeyboard.GetInstance()?.IsOpen() ?? false) return;
+
             // Buttons controller
-            GameController instance = GameController.GetInstance();
             if (inputsController.IsShortcutPrev() && CanLeftClic())
             {
                 instance.PlayGlobalSound("Play_menu_clic", false);
@@ -87,24 +90,13 @@ namespace COSML.Menu
             }
         }
 
-        private void ChangePage()
-        {
-            pagination.ChangePage(currentPage);
-
-            // Force update browser
-            InputsController inputsController = GameController.GetInstance().GetInputsController();
-            if (inputsController is not PadController) return;
-            Patches.PadController padController = (Patches.PadController)inputsController;
-            padController.ForceUpdateUIBrowser(menu);
-        }
-
         public override void OnLeftClic()
         {
             currentPage = Mathf.Clamp(currentPage - 1, 0, pages.Length - 1);
             left.UpdateImage();
             right.UpdateImage();
             valueText.text = pages[currentPage].ToString().ToUpper();
-            ChangePage();
+            pagination.ChangePage(currentPage);
         }
 
         public override void OnRightClic()
@@ -113,7 +105,7 @@ namespace COSML.Menu
             left.UpdateImage();
             right.UpdateImage();
             valueText.text = pages[currentPage].ToString().ToUpper();
-            ChangePage();
+            pagination.ChangePage(currentPage);
         }
 
         public override bool CanLeftClic()

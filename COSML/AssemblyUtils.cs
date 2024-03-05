@@ -23,12 +23,12 @@ namespace COSML
             byte[] buffer = new byte[stream.Length];
             stream.Read(buffer, 0, buffer.Length);
 
-            Texture2D texture = new Texture2D(2, 2);
+            Texture2D texture = new(2, 2);
             texture.LoadImage(buffer, true);
 
             Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f, pixelsPerUnit);
             string[] words = path.Split('.');
-            sprite.name = words[words.Length - 2];
+            sprite.name = words[^2];
             return sprite;
         }
     }

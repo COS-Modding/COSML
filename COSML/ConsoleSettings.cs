@@ -10,7 +10,7 @@ namespace COSML
     public class ConsoleSettings
     {
         /// <summary>
-        ///	    Wheter to use colors in the log console.
+        ///	    Whether to use colors in the log console.
         /// </summary>
         public bool UseLogColors;
 

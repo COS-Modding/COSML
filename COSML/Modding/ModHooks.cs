@@ -55,7 +55,6 @@ namespace COSML.Modding
                 {
                     GlobalSettings = settings;
                     Logging.SetLogLevel(GlobalSettings.LoggingLevel);
-                    Logging.SetUseShortLogLevel(GlobalSettings.ShortLoggingLevel);
                     Logging.SetIncludeTimestampt(GlobalSettings.IncludeTimestamps);
                 }
             }
@@ -74,7 +73,7 @@ namespace COSML.Modding
                 var settings = GlobalSettings;
                 if (settings is null) return;
 
-                settings.ModEnabledSettings = new Dictionary<string, bool>();
+                settings.ModEnabledSettings = [];
 
                 foreach (var x in COSML.ModInstances)
                 {
@@ -109,8 +108,6 @@ namespace COSML.Modding
         {
             try
             {
-                if (!GlobalSettings.ShowDebugLogInGame) return;
-
                 _console ??= new GameObject("COSMLConsole").AddComponent<COSMLConsole>();
                 _console.AddText(message, level);
             }
@@ -123,31 +120,15 @@ namespace COSML.Modding
         /// <summary>
         /// Called when the game is fully closed
         /// </summary>
-        /// <remarks>ApplicationQuit.OnApplicationQuit</remarks>
         public static event Action ApplicationQuitHook;
 
         /// <summary>
         /// Called when the game is fully closed
         /// </summary>
-        /// <remarks>ApplicationQuit.OnApplicationQuit</remarks>
         internal static void OnApplicationQuit()
         {
-            Logging.API.Debug("OnApplicationQuit Invoked");
-
-            if (ApplicationQuitHook == null) return;
-
-            Delegate[] invocationList = ApplicationQuitHook.GetInvocationList();
-            foreach (Action toInvoke in invocationList.Cast<Action>())
-            {
-                try
-                {
-                    toInvoke.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    Logging.API.Error(ex);
-                }
-            }
+            Logging.API.Debug("Quitting game");
+            ApplicationQuitHook?.Invoke();
         }
 
         internal static event Action<ModSavegameData> SaveLocalSettings;
@@ -157,7 +138,7 @@ namespace COSML.Modding
         internal static void OnLoadLocalSettings(ModSavegameData data) => LoadLocalSettings?.Invoke(data);
 
 
-        #region SceneHandling
+        #region PlaceHandling
 
         /// <summary>
         /// Called after a the place has been changed
@@ -169,23 +150,7 @@ namespace COSML.Modding
         /// </summary>
         internal static void OnPlaceChanged(Place from, Place to)
         {
-            Logging.API.Debug("OnPlaceChanged Invoked");
-
-            if (PlaceChanged == null) return;
-
-            Delegate[] invocationList = PlaceChanged.GetInvocationList();
-
-            foreach (Action<Place, Place> toInvoke in invocationList.Cast<Action<Place, Place>>())
-            {
-                try
-                {
-                    toInvoke.Invoke(from, to);
-                }
-                catch (Exception ex)
-                {
-                    Logging.API.Error(ex);
-                }
-            }
+            PlaceChanged?.Invoke(from, to);
         }
 
         #endregion
@@ -199,14 +164,10 @@ namespace COSML.Modding
         /// <param name="onlyEnabled">Should the method only return the mod if it is enabled.</param>
         /// <param name="allowLoadError">Should the method return the mod even if it had load errors.</param>
         /// <returns></returns>
-        public static IMod GetMod(
-            string name,
-            bool onlyEnabled = false,
-            bool allowLoadError = false
-        ) => COSML.ModInstanceNameMap.TryGetValue(name, out var mod)
-            && (!onlyEnabled || mod.Enabled)
-            && (allowLoadError || mod.Error is null)
-         ? mod.Mod : null;
+        public static IMod GetMod(string name, bool onlyEnabled = false, bool allowLoadError = false)
+        {
+            return COSML.ModInstanceNameMap.TryGetValue(name, out var mod) && (!onlyEnabled || mod.Enabled) && (allowLoadError || mod.Error is null) ? mod.Mod : null;
+        }
 
         /// <summary>
         /// Gets a mod instance by type.
@@ -260,7 +221,7 @@ namespace COSML.Modding
 
         #endregion
 
-        private static event Action finishedLoadingModsHook;
+        private static event Action InternalFinishedLoadingModsHook;
 
         /// <summary>
         /// Event invoked when mods have finished loading. If modloading has already finished, subscribers will be invoked immediately.
@@ -269,7 +230,7 @@ namespace COSML.Modding
         {
             add
             {
-                finishedLoadingModsHook += value;
+                InternalFinishedLoadingModsHook += value;
 
                 if (!COSML.LoadState.HasFlag(COSML.ModLoadState.Loaded)) return;
 
@@ -282,26 +243,12 @@ namespace COSML.Modding
                     Logging.API.Error(ex);
                 }
             }
-            remove => finishedLoadingModsHook -= value;
+            remove => InternalFinishedLoadingModsHook -= value;
         }
 
         internal static void OnFinishedLoadingMods()
         {
-            if (finishedLoadingModsHook == null) return;
-
-            Delegate[] invocationList = finishedLoadingModsHook.GetInvocationList();
-
-            foreach (Action toInvoke in invocationList.Cast<Action>())
-            {
-                try
-                {
-                    toInvoke.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    Logging.API.Error(ex);
-                }
-            }
+            InternalFinishedLoadingModsHook?.Invoke();
         }
     }
 }

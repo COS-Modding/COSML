@@ -1,4 +1,4 @@
-Chants Of Sennaar Mod Loader (COSML)
+**C**hants **O**f **S**ennaar **M**od **L**oader (COSML)
 =========================
 
 A Chants Of Sennaar mod loader, using [MonoMod](https://github.com/MonoMod/MonoMod).
@@ -10,15 +10,23 @@ Feel free to join the [modding discord server](https://discord.com/invite/cPsYmn
 How to install
 =======
 1. Download COSML in the [releases](https://github.com/COS-Modding/COSML/releases/latest).
-2. Unzip the content in your game folder: `Chants of Sennaar\Chants Of Sennaar_Data\Managed`.
+2. Unzip the content in your game folder: `Chants of Sennaar\Chants Of Sennaar_Data\Managed\`.
 3. Create manually a folder named `Mods` within the `Managed` folder and put your mods there.
 4. Launch the game and enjoy!
 
 To uninstall COSML, do `Verify integrity of game files...` on the game's property on Steam.
 
+Internationalization (i18n)
+=======
+You can replace in-game translations or add custom languages. Simply duplicate `template.txt` in `Managed\I18n\` and name it after its language code. Then fill it with your translations.
+
+Any i18n file named in the following list will replace their corresponding in-game language: `en, fr, es, es-419, pt, de, it, zh, zh-tw, ja, ko, ru, cs, pl`.
+
 Useful links
 =======
 All sprites of the game: https://drive.google.com/drive/folders/1ISNfrq57yj26VVAu6vrk9cHR6tlRqGDr?usp=sharing
+
+All fonts of the game: https://drive.google.com/drive/folders/1sn8N94b-fIlBANODLGepdt_WyhPYvYO6?usp=sharing
 
 Build
 =======

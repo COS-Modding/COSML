@@ -16,7 +16,6 @@ namespace COSML.Log
         private static StreamWriter Writer;
 
         private static LogLevel _logLevel;
-        private static bool _shortLoggingLevel;
         private static bool _includeTimestamps;
 
         private static readonly string LogFilePrev = Path.Combine(Application.persistentDataPath, "ModLog-prev.txt");
@@ -49,11 +48,6 @@ namespace COSML.Log
             _logLevel = level;
         }
 
-        internal static void SetUseShortLogLevel(bool value)
-        {
-            _shortLoggingLevel = value;
-        }
-
         internal static void SetIncludeTimestampt(bool value)
         {
             _includeTimestamps = value;
@@ -62,14 +56,14 @@ namespace COSML.Log
         /// <summary>
         /// Checks to ensure that the logger level is currently high enough for this message, if it is, write it.
         /// </summary>
-        /// <param name="message">Message to log</param>
-        /// <param name="level">Level of Log</param>
+        /// <param name="message">Message to log.</param>
+        /// <param name="level">Level of log.</param>
         private static void Log(string message, LogLevel level)
         {
             if (_logLevel > level) return;
 
             string timeText = "[" + DateTime.Now.ToUniversalTime().ToString("HH:mm:ss") + "]:"; // uses ISO 8601
-            string levelText = _shortLoggingLevel ? $"[{LogLevelExt.ToShortString(level).ToUpper()}]:" : $"[{level.ToString().ToUpper()}]:";
+            string levelText = $"[{level.ToString().ToUpper()}]:";
             string prefixText = _includeTimestamps ? timeText + levelText : levelText;
 
             WriteToFile(ExpandLines(prefixText, message), level);
@@ -89,26 +83,26 @@ namespace COSML.Log
         /// <summary>
         /// Checks to ensure that the logger level is currently high enough for this message, if it is, write it.
         /// </summary>
-        /// <param name="message">Message to log</param>
-        /// <param name="level">Level of Log</param>
+        /// <param name="message">Message to log.</param>
+        /// <param name="level">Level of log.</param>
         private static void Log(object message, LogLevel level)
         {
             Log(message.ToString(), level);
         }
 
         /// <summary>
-        /// Log at the debug level.  Usually reserved for diagnostics.
+        /// Log at the debug level. Usually reserved for diagnostics.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public static void Debug(string message)
         {
             Log(message, LogLevel.Debug);
         }
 
         /// <summary>
-        /// Log at the debug level.  Usually reserved for diagnostics.
+        /// Log at the debug level. Usually reserved for diagnostics.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public static void Debug(object message)
         {
             Log(message, LogLevel.Debug);
@@ -117,7 +111,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the info level.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public static void Info(string message)
         {
             Log(message, LogLevel.Info);
@@ -126,7 +120,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the info level.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public static void Info(object message)
         {
             Log(message, LogLevel.Info);
@@ -135,7 +129,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the warning level.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public static void Warn(string message)
         {
             Log(message, LogLevel.Warn);
@@ -144,7 +138,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the warning level.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public static void Warn(object message)
         {
             Log(message, LogLevel.Warn);
@@ -153,7 +147,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the error level.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public static void Error(string message)
         {
             Log(message, LogLevel.Error);
@@ -162,7 +156,7 @@ namespace COSML.Log
         /// <summary>
         /// Log at the error level.
         /// </summary>
-        /// <param name="message">Message to log</param>
+        /// <param name="message">Message to log.</param>
         public static void Error(object message)
         {
             Log(message, LogLevel.Error);
@@ -171,8 +165,8 @@ namespace COSML.Log
         /// <summary>
         /// Locks file to write, writes to file, releases lock.
         /// </summary>
-        /// <param name="text">Text to write</param>
-        /// <param name="level">Level of Log</param>
+        /// <param name="text">Text to write.</param>
+        /// <param name="level">Level of log.</param>
         private static void WriteToFile(string text, LogLevel level)
         {
             lock (Locker)

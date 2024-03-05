@@ -1,6 +1,6 @@
 ﻿using MonoMod;
 using UnityEngine;
-using static COSML.Menu.MenuUtils;
+using static COSML.MainMenu.MenuUtils;
 
 namespace COSML.Patches
 {
@@ -16,14 +16,14 @@ namespace COSML.Patches
         {
             // Add mods button
             GameObject pauseMenuGo = GameObject.Find($"{Constants.MAIN_MENU_PATH}/Menu_Pause");
-            modButton = CreateButton(new InternalButtonData
+            modButton = CreateButton(new ButtonData
             {
                 parent = pauseMenuGo.transform,
                 menu = this,
-                label = "MODS",
-                buttonId = 1,
-                position = 1
+                label = new I18nKey("cosml.menu.mods"),
+                buttonId = 1
             });
+            modButton.transform.localPosition = GetOptionButtonLocalPosition(1);
 
             // Edit help button
             GameObject helpButtonGo = pauseMenuGo.transform.Find($"MenuBarre_Aide").gameObject;
@@ -35,7 +35,6 @@ namespace COSML.Patches
             quitButtonGo.GetComponent<MainMenuButton>().buttonId = 3;
         }
 
-        public extern void orig_Loop();
         public new void Loop()
         {
             if (gameObject.activeSelf)
@@ -54,7 +53,6 @@ namespace COSML.Patches
             }
         }
 
-        public extern void orig_Show(AbstractMainMenu previousMenu);
         public new void Show(AbstractMainMenu previousMenu)
         {
             if (!gameObject.activeSelf)
@@ -79,7 +77,6 @@ namespace COSML.Patches
             }
         }
 
-        public extern void orig_ForceExit();
         public new void ForceExit()
         {
             optionButton.ForceExit();
@@ -89,28 +86,27 @@ namespace COSML.Patches
             backButton.ForceExit();
         }
 
-        public extern void orig_OnClic(int buttonId);
         public new void OnClic(int buttonId)
         {
             GameController instance = (GameController)GameController.GetInstance();
-            UIController uIController = (UIController)instance.GetUIController();
+            Patches.MainMenu mainMenu = (Patches.MainMenu)instance.GetUIController().mainMenu;
             switch (buttonId)
             {
                 case 0:
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    uIController.mainMenu.Swap(uIController.mainMenu.optionMenu, true);
+                    mainMenu.Swap(mainMenu.optionMenu, true);
                     break;
                 case 1:
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    uIController.mainMenu.Swap(uIController.mainMenu.modMenu, true);
+                    mainMenu.Swap(mainMenu.modMenu, true);
                     break;
                 case 2:
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    uIController.mainMenu.Swap(uIController.mainMenu.helpMenu, true);
+                    mainMenu.Swap(mainMenu.helpMenu, true);
                     break;
                 case 3:
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    uIController.mainMenu.Swap(uIController.mainMenu.confirmQuitMenu, true);
+                    mainMenu.Swap(mainMenu.confirmQuitMenu, true);
                     break;
                 case 4:
                     GoToPreviousMenu();
@@ -118,18 +114,17 @@ namespace COSML.Patches
             }
         }
 
-        public extern AbstractUIBrowser orig_GetBrowser();
         public new AbstractUIBrowser GetBrowser()
         {
             if (browser != null) return browser;
 
-            browser = new UIBrowser(GetBrowserId(), new OverableUI[4][]
-                {
-                new OverableUI[1] { optionButton },
-                new OverableUI[1] { modButton },
-                new OverableUI[1] { aideButton },
-                new OverableUI[1] { quitterButton }
-                }, 0, 0);
+            browser = new UIBrowser(GetBrowserId(),
+                [
+                    [optionButton],
+                    [modButton],
+                    [aideButton],
+                    [quitterButton]
+                ], 0, 0);
 
             return browser;
         }

@@ -9,12 +9,9 @@ namespace COSML.Log
     {
         /// <inheritdoc />
         /// <summary>
-        /// Constructs a Loggable Class with a given Name
+        /// Constructs a loggable class with a given name.
         /// </summary>
-        /// <param name="name"></param>
-        public SimpleLogger(string name)
-        {
-            ClassName = name;
-        }
+        /// <param name="name">Name of the logger.</param>
+        public SimpleLogger(string name) => ClassName = name;
     }
 }

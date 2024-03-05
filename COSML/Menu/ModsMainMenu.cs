@@ -4,32 +4,32 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 using static COSML.COSML;
-using static COSML.Menu.MenuUtils;
+using static COSML.MainMenu.MenuUtils;
 
-namespace COSML.Menu
+namespace COSML.MainMenu
 {
     public class ModsMainMenu : IMainMenu
     {
         public MainMenuPagination pagination;
 
-        private HashSet<MonoBehaviour> modButtons;
+        private List<MonoBehaviour> modButtons;
         private Dictionary<int, ModInstance> modInstances;
         private Dictionary<IModMenu, ModMenu> modMenus;
 
         public override void Init()
         {
+            modButtons = [];
+            modInstances = [];
+            modMenus = [];
+
+            pagination = gameObject.AddComponent<MainMenuPagination>();
+            pagination.menu = this;
+
             try
             {
-                modButtons = new HashSet<MonoBehaviour>();
-                modInstances = new Dictionary<int, ModInstance>();
-                modMenus = new Dictionary<IModMenu, ModMenu>();
-
-                pagination = gameObject.AddComponent<MainMenuPagination>();
-                pagination.menu = this;
-                pagination.Init();
-
-                AddOptions();
+                AddMenuOptions();
             }
             catch (Exception ex)
             {
@@ -38,95 +38,108 @@ namespace COSML.Menu
 
             Hide();
         }
-        private void AddOptions()
+        private void AddMenuOptions()
         {
-            ModInstance[] ModInstancesArr = ModInstances.Where(m => m.Error == null).ToArray();
+            ModInstance[] ModInstancesArr = [.. ModInstances.Where(m => m.Error == null).OrderBy(m => m.Name)];
             if (ModInstancesArr.Length <= 0) return;
 
             // Add mod buttons
-            int modOrder = 1;
+            int modOrder = 0;
             foreach (ModInstance modInst in ModInstancesArr)
             {
-                AddModButton(modInst, modOrder);
-                AddModMenu(modInst);
+                try
+                {
+                    AddModMenu(modInst);
+                    AddModButton(modInst, modOrder);
+                }
+                catch (Exception ex)
+                {
+                    Logging.API.Error($"Error creating menu for {modInst.Name}\n" + ex);
+                    AddModButton(modInst, modOrder, true);
+                }
                 modOrder++;
             }
+
+            pagination.Init(modButtons);
         }
 
-        private void AddModButton(ModInstance modInst, int modOrder)
+        private MonoBehaviour AddModButton(ModInstance modInst, int modOrder, bool error = false)
         {
-            int buttonId = (modOrder - 1) % OPTION_MENU_MAX_PER_PAGE;
             MonoBehaviour modButton;
             string label = $"{modInst.Name} - {modInst.Mod.GetVersionSafe("???")}";
-            try
-            {
-                if (modInst.Mod is IModTogglable && modInst.Mod is not IModMenu)
-                {
-                    modButton = CreateToggle(new InternalToggleData
-                    {
-                        parent = transform,
-                        menu = this,
-                        buttonId = buttonId,
-                        position = buttonId,
-                        label = label,
-                        value = modInst.Enabled,
-                    });
-                }
-                else if (modInst.Mod is IModMenu)
-                {
-                    modButton = CreateButton(new InternalButtonData
-                    {
-                        parent = transform,
-                        menu = this,
-                        buttonId = buttonId,
-                        position = buttonId,
-                        label = label
-                    });
-                }
-                else
-                {
-                    modButton = CreateText(new InternalTextData
-                    {
-                        parent = transform,
-                        menu = this,
-                        position = buttonId,
-                        label = label
-                    });
-                }
 
-                modButtons.Add(modButton);
-                modInstances.Add(buttonId, modInst);
+            int buttonId = modOrder % OPTION_MENU_MAX_PER_PAGE;
 
-                pagination?.AddElement(modButton.gameObject);
-            }
-            catch (Exception ex)
+            if (!error && modInst.Mod is IModTogglable && modInst.Mod is not IModMenu)
             {
-                Logging.API.Error($"Error creating menu for {nameof(IModMenu)} {modInst.Name}\n" + ex);
+                modButton = CreateToggle(new ToggleData
+                {
+                    parent = transform,
+                    menu = this,
+                    buttonId = buttonId,
+                    label = label,
+                    value = modInst.Enabled,
+                    on = new I18nKey("cosml.menu.mods.enabled.on"),
+                    off = new I18nKey("cosml.menu.mods.enabled.off")
+                });
             }
+            else if (!error && modInst.Mod is IModMenu)
+            {
+                modButton = CreateButton(new ButtonData
+                {
+                    parent = transform,
+                    menu = this,
+                    buttonId = buttonId,
+                    label = label
+                });
+            }
+            else
+            {
+                modButton = CreateText(new TextData
+                {
+                    parent = transform,
+                    menu = this,
+                    label = label
+                });
+
+                if (error)
+                {
+                    UpdateOption(modButton, new I18nKey("cosml.menu.mods.error", label));
+                    modButton.transform.Find("Text_Libellé").GetComponent<Text>().color = new Color(1, 1, 1, 0.3f);
+                }
+            }
+
+            modButtons.Add(modButton);
+            modInstances.Add(buttonId, modInst);
+
+            return modButton;
         }
 
         private void AddModMenu(ModInstance modInst)
         {
             if (modInst.Mod is IModMenu mod)
             {
-                List<IOptionData> menuOptions = mod.GetMenu();
+                IList<MenuOption> options = mod.GetMenu();
                 if (modInst.Mod is IModTogglable)
                 {
-                    menuOptions.Insert(0, new ToggleData(
-                        "Enable",
+                    options.Insert(0, new MenuToggle(
+                        new I18nKey("cosml.menu.mods.enabled"),
                         modInst.Enabled,
-                        (value) =>
+                        new I18nKey("cosml.menu.mods.enabled.on"),
+                        new I18nKey("cosml.menu.mods.enabled.off"),
+                        _ =>
                         {
                             if (modInst.Enabled) UnloadMod(modInst);
                             else LoadMod(modInst);
                         }
                     ));
                 }
-                ModMenu modMenu = CreateMenu<ModMenu>(new InternalMenuData
+                ModMenu modMenu = CreateMenu<ModMenu>(new MenuData
                 {
+                    name = $"Menu_Mods_{modInst.Name.Replace(" ", "_")}",
                     label = modInst.Name,
                     parent = this,
-                    options = menuOptions
+                    options = options
                 });
                 modMenus.Add(mod, modMenu);
             }
@@ -142,10 +155,10 @@ namespace COSML.Menu
                     backButton.over.SetTrigger("Show");
                 }
                 backButton.Loop();
-                pagination?.Loop();
+                pagination.Loop();
                 foreach (MonoBehaviour btn in modButtons)
                 {
-                    btn.GetComponent<MainMenuButton>()?.Loop();
+                    btn.GetComponent<Patches.MainMenuButton>()?.Loop();
                     btn.GetComponent<MainMenuText>()?.Loop();
                     btn.GetComponent<MainMenuSelector>()?.Loop();
                 }
@@ -156,33 +169,32 @@ namespace COSML.Menu
         {
             if (!gameObject.activeSelf)
             {
-                Patches.MainMenu mainMenu = (Patches.MainMenu)GameController.GetInstance().GetUIController().mainMenu;
                 gameObject.SetActive(true);
                 backButton.InitRoll();
                 backButton.Loop();
-                pagination?.InitRoll();
+                pagination.InitRoll();
                 if (backButton.gameObject.activeSelf && (previousMenu == null || previousMenu.GetType().Equals(typeof(RootMainMenu))))
                 {
                     backButton.over.enabled = false;
                 }
                 foreach (MonoBehaviour btn in modButtons)
                 {
-                    btn.GetComponent<MainMenuButton>()?.InitRoll();
+                    btn.GetComponent<Patches.MainMenuButton>()?.InitRoll();
                     btn.GetComponent<MainMenuText>()?.InitRoll();
                     btn.GetComponent<MainMenuSelector>()?.InitRoll();
                 }
-
-                mainMenu.modMenu?.ResetBrowser();
+                ResetBrowser();
+                Refresh();
             }
         }
 
         public override void ForceExit()
         {
             backButton.ForceExit();
-            pagination?.ForceExit();
+            pagination.ForceExit();
             foreach (MonoBehaviour btn in modButtons)
             {
-                btn.GetComponent<MainMenuButton>()?.ForceExit();
+                btn.GetComponent<Patches.MainMenuButton>()?.ForceExit();
                 btn.GetComponent<MainMenuText>()?.ForceExit();
                 btn.GetComponent<MainMenuSelector>()?.ForceExit();
             }
@@ -190,16 +202,16 @@ namespace COSML.Menu
 
         public override void OnClic(int buttonId)
         {
-            GameController instance = GameController.GetInstance();
-            UIController uicontroller = instance.GetUIController();
-
-            if (buttonId < OPTION_MENU_MAX_PER_PAGE)
+            if (buttonId >= 0)
             {
+                GameController instance = GameController.GetInstance();
+                UIController uiController = instance.GetUIController();
                 ModInstance modInst = modInstances[buttonId];
                 if (modInst.Mod is IModMenu)
                 {
                     instance.PlayGlobalSound("Play_menu_clic", false);
-                    uicontroller.mainMenu.Swap(modMenus[modInst.Mod as IModMenu], true);
+                    ModMenu menu = modMenus[modInst.Mod as IModMenu];
+                    uiController.mainMenu.Swap(menu, true);
                 }
                 else if (modInst.Mod is IModTogglable)
                 {
@@ -217,41 +229,31 @@ namespace COSML.Menu
 
         public override AbstractUIBrowser GetBrowser()
         {
-            OverableUI[][] overableUI = pagination?.GetOverableUI();
-
-            if (overableUI == null)
-            {
-                int index = 0;
-                overableUI = new OverableUI[modButtons.Count][];
-                foreach (MonoBehaviour btn in modButtons)
-                {
-                    OverableUI btnOver = btn.GetComponent<MainMenuButton>();
-                    btnOver ??= btn.GetComponent<MainMenuText>()?.over;
-                    btnOver ??= btn.GetComponent<MainMenuSelector>()?.over;
-
-                    overableUI[index] = new OverableUI[1] { btnOver };
-                    index++;
-                }
-            }
-
-            return new UIBrowser(GetBrowserId(), overableUI, 0, 0);
+            OverableUI[][] overableUIs = pagination.GetOverableUI();
+            browser = new Patches.UIBrowser(GetBrowserId(), overableUIs, GetBrowserIndex(overableUIs.Length), 0);
+            return browser;
         }
 
         public override void GoToPreviousMenu()
         {
             GameController instance = GameController.GetInstance();
-            UIController uicontroller = instance.GetUIController();
+            UIController uiController = instance.GetUIController();
             instance.PlayGlobalSound("Play_menu_return", false);
             if (instance.GetPauseController().InPause())
             {
-                uicontroller.mainMenu.Swap(uicontroller.mainMenu.pauseMenu, false);
+                uiController.mainMenu.Swap(uiController.mainMenu.pauseMenu, false);
                 return;
             }
-            uicontroller.mainMenu.Swap(uicontroller.mainMenu.rootMenu, false);
+            uiController.mainMenu.Swap(uiController.mainMenu.rootMenu, false);
             backButton.over.SetTrigger("Hide");
         }
 
         public void ResetBrowser() { }
+
+        public void SetIndex(int i, int j)
+        {
+            browser?.ResetPosition(i, j);
+        }
 
         public override void Translate(I18nType i18n, I18nPlateformType i18nPlateformType) { }
     }

@@ -2,42 +2,51 @@
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using static COSML.Menu.MenuUtils;
+using static COSML.MainMenu.MenuUtils;
 
-namespace COSML.Menu
+namespace COSML.MainMenu
 {
     public class MainMenuPagination : MonoBehaviour
     {
         public AbstractMainMenu menu;
 
-        private HashSet<GameObject> elements;
-        private List<GameObject> pages;
-        private MainMenuPageSelector pageSelector;
+        private List<MonoBehaviour> options;
+        private MainMenuPageSelector pageSelector = null;
+        private int totalPages = 1;
         private int currentPage;
 
-        public void Init()
+        public int CurrentPage => currentPage;
+
+        public void Init(List<MonoBehaviour> optionsMono)
         {
-            elements = new HashSet<GameObject>();
-            pages = new List<GameObject>();
+            options = optionsMono;
+            totalPages = 1;
             currentPage = 0;
 
             pageSelector = CreatePageSelector();
+
+            CreateOptionsList();
         }
 
-        public void AddElement(GameObject element)
+        private void CreateOptionsList()
         {
-            elements.Add(element);
-
-            GameObject lastPage = pages.Count > 0 ? pages.Last() : null;
-            if ((elements.Count - 1) % OPTION_MENU_MAX_PER_PAGE == 0)
+            foreach (MonoBehaviour option in options)
             {
-                lastPage = CreatePage();
-                pageSelector.SetValues(pages.Select((m, i) => i + 1).ToArray());
-                pageSelector.gameObject.SetActive(pages.Count > 1);
+                GameObject optionGo = new("MenuOption");
+                optionGo.transform.SetParent(transform, false);
+                option.transform.SetParent(optionGo.transform, false);
             }
 
-            element.transform.SetParent(lastPage.transform, false);
-            pageSelector.gameObject.SetActive(pages.Count > 1);
+            RefreshPageSelector();
+        }
+
+        private void RefreshPageSelector()
+        {
+            int visibleCount = options.Select(o => o.gameObject.activeSelf ? 1 : 0).Sum();
+            totalPages = Mathf.Max(Mathf.CeilToInt((float)visibleCount / OPTION_MENU_MAX_PER_PAGE), 1);
+            pageSelector.SetValues([.. Enumerable.Range(1, totalPages)]);
+            pageSelector.gameObject.SetActive(totalPages > 1);
+            currentPage = Mathf.Clamp(currentPage, 0, totalPages - 1);
         }
 
         public void InitRoll()
@@ -45,74 +54,74 @@ namespace COSML.Menu
             pageSelector?.InitRoll();
         }
 
-        public void ForceExit()
-        {
-            pageSelector?.ForceExit();
-        }
-
         public void Loop()
         {
             pageSelector?.Loop();
         }
 
-        private GameObject CreatePage()
+        public void ForceExit()
         {
-            GameObject pageGo = new($"Page_{pages.Count + 1}");
-            pageGo.transform.SetParent(transform, false);
-            pageGo.SetActive(pages.Count == 0);
-
-            pages.Add(pageGo);
-
-            return pageGo;
+            pageSelector?.ForceExit();
         }
 
         public void ChangePage(int page)
         {
-            if (pages == null || pages.Count == 0) return;
-
-            pages[currentPage].SetActive(false);
-            currentPage = Mathf.Clamp(page, 0, pages.Count - 1);
-            pages[currentPage].SetActive(true);
-        }
-
-        public int GetCurrentPage()
-        {
-            return currentPage;
+            if (totalPages <= 1) return;
+            currentPage = Mathf.Clamp(page, 0, totalPages - 1);
+            if (menu is ModsMainMenu modsMainMenu) modsMainMenu.SetIndex(0, 0);
+            else if (menu is ModMenu modMenu) modMenu.SetIndex(0, 0);
+            Refresh();
         }
 
         public OverableUI[][] GetOverableUI()
         {
-            int index = 0;
-            OverableUI[][] overableUIs = new OverableUI[pages[currentPage].transform.childCount][];
-            foreach (Transform btn in pages[currentPage].transform)
-            {
-                OverableUI btnOver = btn.GetComponent<MainMenuButton>();
-                btnOver ??= btn.GetComponent<MainMenuText>()?.over;
-                btnOver ??= btn.GetComponent<MainMenuSelector>()?.over;
-                btnOver ??= btn.GetComponent<MainMenuSlider>()?.over;
-                btnOver ??= btn.GetComponent<MainMenuInputButton>()?.over;
+            RefreshPageSelector();
 
-                overableUIs[index] = new OverableUI[1] { btnOver };
-                index++;
+            List<OverableUI[]> overableUIs = [];
+            int visibleIndex = 0;
+            int activeIndex = 0;
+            foreach (MonoBehaviour option in options)
+            {
+                GameObject menuOption = option.transform.parent.gameObject;
+                menuOption.SetActive(IsInPage(activeIndex));
+                if (!option.gameObject.activeSelf) continue;
+                activeIndex++;
+                if (!menuOption.activeSelf) continue;
+
+                OverableUI optionOver = option.GetComponent<Patches.MainMenuButton>();
+                optionOver ??= option.GetComponent<MainMenuText>()?.over;
+                optionOver ??= option.GetComponent<MainMenuSelector>()?.over;
+                optionOver ??= option.GetComponent<MainMenuSlider>()?.over;
+                optionOver ??= option.GetComponent<MainMenuInputText>()?.over;
+
+                option.transform.localPosition = GetOptionButtonLocalPosition(visibleIndex);
+                overableUIs.Add([optionOver]);
+                visibleIndex++;
             }
 
-            return overableUIs;
+            return [.. overableUIs];
         }
+
+        private bool IsInPage(int index) => index >= currentPage * OPTION_MENU_MAX_PER_PAGE && index < (currentPage + 1) * OPTION_MENU_MAX_PER_PAGE;
 
         private MainMenuPageSelector CreatePageSelector()
         {
+            if (this.pageSelector != null) return this.pageSelector;
+
             // Base
-            MainMenuSelector select = CreateSelect(new InternalSelectData
+            MainMenuSelector select = CreateSelect(new SelectData
             {
                 parent = transform,
                 menu = menu,
-                label = "PAGE",
-                values = null,
+                label = new I18nKey("cosml.menu.mods.page"),
+                values = [],
                 value = 0,
                 buttonId = Constants.PAGINATION_BUTTON_ID,
-                position = 0
             });
+            select.name = "MenuPagination";
+            select.transform.localPosition = GetOptionButtonLocalPosition(0);
             MainMenuPageSelector pageSelector = select.gameObject.AddComponent<MainMenuPageSelector>();
+            pageSelector.transform.localPosition = new Vector3(1000, transform.Find("Text_Titre").localPosition.y + 18, 0);
             pageSelector.menu = menu;
             pageSelector.pagination = this;
             pageSelector.over = select.over;
@@ -120,8 +129,12 @@ namespace COSML.Menu
             pageSelector.overAnimator = select.overAnimator;
             pageSelector.valueText = select.valueText;
             pageSelector.valueText.transform.localPosition = new Vector3(-375, pageSelector.valueText.transform.localPosition.y, 0);
-            pageSelector.SetValues(new int[1] { 1 });
-            pageSelector.transform.localPosition = new Vector3(1000, transform.Find("Text_Titre").localPosition.y + 18, 0);
+            pageSelector.SetValues([1]);
+
+            // Label
+            Text labelText = pageSelector.transform.Find("Text_Libellé").GetComponent<Text>();
+            labelText.alignment = TextAnchor.MiddleRight;
+            labelText.transform.localPosition = new Vector3(-1220, labelText.transform.localPosition.y, 0);
 
             // Chevrons
             pageSelector.left = select.left;

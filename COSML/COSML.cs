@@ -6,19 +6,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using UnityEngine;
-using UObject = UnityEngine.Object;
 
 namespace COSML
 {
     /// <summary>
     /// Handles loading of mods.
     /// </summary>
-    internal static class COSML
+    public static class COSML
     {
         [Flags]
-        public enum ModLoadState
+        internal enum ModLoadState
         {
             NotStarted = 0,
             Started = 1,
@@ -26,20 +24,16 @@ namespace COSML
             Loaded = 4,
         }
 
-        public const int Version = 2;
+        public const string Version = "1.0.0";
 
-        public static ModLoadState LoadState = ModLoadState.NotStarted;
+        public static string ManagedPath { get; private set; }
+        public static string ModsPath { get; private set; }
 
-        public static Dictionary<Type, ModInstance> ModInstanceTypeMap { get; private set; } = new();
-        public static Dictionary<string, ModInstance> ModInstanceNameMap { get; private set; } = new();
-        public static HashSet<ModInstance> ModInstances { get; private set; } = new();
+        internal static ModLoadState LoadState = ModLoadState.NotStarted;
+        internal static Dictionary<Type, ModInstance> ModInstanceTypeMap { get; private set; } = [];
+        internal static Dictionary<string, ModInstance> ModInstanceNameMap { get; private set; } = [];
+        internal static HashSet<ModInstance> ModInstances { get; private set; } = [];
 
-        /// <summary>
-        /// Try to add a ModInstance to the internal dictionaries.
-        /// </summary>
-        /// <param name="ty">The type of the mod.</param>
-        /// <param name="mod">The ModInstance.</param>
-        /// <returns>True if the ModInstance was successfully added; false otherwise.</returns>
         private static bool TryAddModInstance(Type ty, ModInstance mod)
         {
             if (ModInstanceNameMap.ContainsKey(mod.Name))
@@ -58,29 +52,22 @@ namespace COSML
             return true;
         }
 
-        /// <summary>
-        /// Starts the main loading of all mods.
-        /// This loads assemblies, constructs and initializes mods, and creates the mod list menu.<br/>
-        /// This method should only be called once in the lifetime of the game.
-        /// </summary>
-        /// <param name="coroutineHolder"></param>
-        /// <returns></returns>
-        public static IEnumerator LoadModsInit(GameObject coroutineHolder)
+        internal static IEnumerator LoadModsInit(GameObject coroutineHolder)
         {
             try
             {
                 Logging.InitializeFileStream();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 // We can still log to the console at least, if that's enabled.
-                Debug.Log($"Error while initializing ModLog.txt: {e}");
+                Debug.Log($"Error while initializing ModLog.txt\n{ex}");
             }
 
             Logging.API.Info($"Mod loader: {Version}");
             Logging.API.Info("Starting mod loading");
 
-            string managed_path = SystemInfo.operatingSystemFamily switch
+            ManagedPath = SystemInfo.operatingSystemFamily switch
             {
                 OperatingSystemFamily.Windows => Path.Combine(Application.dataPath, "Managed"),
                 OperatingSystemFamily.MacOSX => Path.Combine(Application.dataPath, "Resources", "Data", "Managed"),
@@ -89,10 +76,10 @@ namespace COSML
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            if (managed_path is null)
+            if (ManagedPath is null)
             {
                 LoadState |= ModLoadState.Loaded;
-                UObject.Destroy(coroutineHolder);
+                UnityEngine.Object.Destroy(coroutineHolder);
                 yield break;
             }
 
@@ -100,17 +87,16 @@ namespace COSML
 
             Logging.API.Debug($"Loading assemblies and constructing mods");
 
-            Directory.CreateDirectory("Mods");
-            string mods = Path.Combine(managed_path, "Mods");
-            DirectoryInfo modsDir = new DirectoryInfo(mods);
-            string[] files = modsDir.GetFiles("*", SearchOption.AllDirectories).Where((f) => f.Extension == ".dll").Select((f) => f.FullName).ToArray();
+            ModsPath = Path.Combine(ManagedPath, "Mods");
+            Directory.CreateDirectory(ModsPath);
+            string[] filesPath = [.. new DirectoryInfo(ModsPath).GetFiles("*", SearchOption.AllDirectories).Where(f => f.Extension == ".dll").Select(f => f.FullName)];
 
-            Logging.API.Debug($"DLL files: {string.Join(",\n", files)}");
+            Logging.API.Debug($"DLL files: {string.Join(",\n", filesPath)}");
 
             Assembly Resolve(object sender, ResolveEventArgs args)
             {
                 var asm_name = new AssemblyName(args.Name);
-                if (files.FirstOrDefault(x => x.EndsWith($"{asm_name.Name}.dll")) is string path)
+                if (filesPath.FirstOrDefault(x => x.EndsWith($"{asm_name.Name}.dll")) is string path)
                 {
                     return Assembly.LoadFrom(path);
                 }
@@ -120,13 +106,13 @@ namespace COSML
 
             AppDomain.CurrentDomain.AssemblyResolve += Resolve;
 
-            List<Assembly> asms = new(files.Length);
+            List<Assembly> asms = new(filesPath.Length);
 
             // Load all the assemblies first to avoid dependency issues
             // Dependencies are lazy-loaded, so we won't have attempted loads until the mod initialization.
-            foreach (string path in files)
+            foreach (string path in filesPath)
             {
-                Logging.API.Debug($"Loading assembly `{path}`");
+                Logging.API.Debug($"Loading assembly \"{path}\"");
 
                 try
                 {
@@ -134,11 +120,11 @@ namespace COSML
                 }
                 catch (FileLoadException ex)
                 {
-                    Logging.API.Error($"Unable to load assembly - {ex}");
+                    Logging.API.Error($"Unable to load assembly\n{ex}");
                 }
                 catch (BadImageFormatException ex)
                 {
-                    Logging.API.Error($"Assembly is bad image. {ex}");
+                    Logging.API.Error($"Assembly is bad image\n{ex}");
                 }
                 catch (PathTooLongException)
                 {
@@ -148,7 +134,7 @@ namespace COSML
 
             foreach (Assembly asm in asms)
             {
-                Logging.API.Debug($"Loading mods in assembly `{asm.FullName}`");
+                Logging.API.Debug($"Loading mods in assembly \"{asm.FullName}\"");
 
                 bool foundMod = false;
 
@@ -173,11 +159,11 @@ namespace COSML
 
                         foundMod = true;
 
-                        Logging.API.Debug($"Constructing mod `{ty.FullName}`");
+                        Logging.API.Debug($"Constructing mod \"{ty.FullName}\"");
 
                         try
                         {
-                            if (ty.GetConstructor(Type.EmptyTypes)?.Invoke(Array.Empty<object>()) is Mod mod)
+                            if (ty.GetConstructor(Type.EmptyTypes)?.Invoke([]) is Mod mod)
                             {
                                 TryAddModInstance(
                                     ty,
@@ -193,7 +179,7 @@ namespace COSML
                         }
                         catch (Exception ex)
                         {
-                            Logging.API.Error(ex);
+                            Logging.API.Error($"Failed to instantiate assembly mod \"{ty.FullName}\"\n{ex}");
 
                             TryAddModInstance(
                                 ty,
@@ -220,9 +206,7 @@ namespace COSML
                 }
             }
 
-            ModInstance[] orderedMods = ModInstanceTypeMap.Values
-                .OrderBy(x => x.Mod?.LoadPriority() ?? 0)
-                .ToArray();
+            ModInstance[] orderedMods = [.. ModInstanceTypeMap.Values.OrderBy(x => x.Mod?.LoadPriority() ?? 0)];
 
             foreach (ModInstance mod in orderedMods)
             {
@@ -251,47 +235,40 @@ namespace COSML
                 }
             }
 
-            Logging.API.Info("Finished loading mods:\n" + UpdateModText());
+            Logging.API.Info("Finished loading mods:" + UpdateModText());
 
             ModHooks.OnFinishedLoadingMods();
             LoadState |= ModLoadState.Loaded;
 
-            UObject.Destroy(coroutineHolder.gameObject);
+            I18n.LoadI18n();
+
+            UnityEngine.Object.Destroy(coroutineHolder.gameObject);
         }
 
         private static string UpdateModText()
         {
-            StringBuilder builder = new();
+            string text = "";
 
             foreach (ModInstance mod in ModInstances)
             {
                 if (mod.Error is not ModErrorState err)
                 {
-                    if (mod.Enabled) builder.AppendLine($"{mod.Name} : {mod.Mod.GetVersionSafe("ERROR")}");
+                    if (mod.Enabled) text += $"\n    {mod.Name} : {mod.Mod.GetVersionSafe("ERROR")}";
                 }
                 else
                 {
-                    switch (err)
+                    text += err switch
                     {
-                        case ModErrorState.Construct:
-                            builder.AppendLine($"{mod.Name} : Failed to call constructor! Check ModLog.txt");
-                            break;
-                        case ModErrorState.Duplicate:
-                            builder.AppendLine($"{mod.Name} : Failed to load! Duplicate mod detected");
-                            break;
-                        case ModErrorState.Init:
-                            builder.AppendLine($"{mod.Name} : Failed to initialize! Check ModLog.txt");
-                            break;
-                        case ModErrorState.Unload:
-                            builder.AppendLine($"{mod.Name} : Failed to unload! Check ModLog.txt");
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
+                        ModErrorState.Construct => $"\n    {mod.Name} : Failed to call constructor! Check ModLog.txt",
+                        ModErrorState.Duplicate => $"\n    {mod.Name} : Failed to load! Duplicate mod detected",
+                        ModErrorState.Init => $"\n    {mod.Name} : Failed to initialize! Check ModLog.txt",
+                        ModErrorState.Unload => $"\n    {mod.Name} : Failed to unload! Check ModLog.txt",
+                        _ => throw new ArgumentOutOfRangeException(),
+                    };
                 }
             }
 
-            return builder.ToString();
+            return text;
         }
 
         internal static void LoadMod
@@ -311,7 +288,7 @@ namespace COSML
             catch (Exception ex)
             {
                 mod.Error = ModErrorState.Init;
-                Logging.API.Error($"Failed to load mod `{mod.Mod.GetName()}`\n{ex}");
+                Logging.API.Error($"Failed to load mod \"{mod.Mod.GetName()}\"\n{ex}");
             }
 
             if (updateModText) UpdateModText();
@@ -330,28 +307,28 @@ namespace COSML
             catch (Exception ex)
             {
                 mod.Error = ModErrorState.Unload;
-                Logging.API.Error($"Failed to unload mod `{mod.Name}`\n{ex}");
+                Logging.API.Error($"Failed to unload mod \"{mod.Name}\"\n{ex}");
             }
 
             if (updateModText) UpdateModText();
         }
 
         // Essentially the state of a loaded **mod**. The assembly has nothing to do directly with mods.
-        public class ModInstance
+        internal class ModInstance
         {
-            // The constructed instance of the mod. If Error is `Construct` this will be null.
+            // The constructed instance of the mod. If Error is \"Construct\" this will be null.
             // Generally if Error is anything this value should not be referred to.
-            public IMod Mod;
+            internal IMod Mod;
 
-            public string Name;
+            internal string Name;
 
-            public ModErrorState? Error;
+            internal ModErrorState? Error;
 
             // If the mod is "Enabled" (in the context of IModTogglable)
-            public bool Enabled;
+            internal bool Enabled;
         }
 
-        public enum ModErrorState
+        internal enum ModErrorState
         {
             Construct,
             Duplicate,

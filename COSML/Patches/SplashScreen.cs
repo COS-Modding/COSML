@@ -1,4 +1,4 @@
-#pragma warning disable 414, 649
+#pragma warning disable IDE0052, IDE0044, CS0649, CS0414
 
 using MonoMod;
 

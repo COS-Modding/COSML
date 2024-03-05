@@ -1,8 +1,8 @@
 using COSML.Log;
+using COSML.MainMenu;
 using COSML.Modding;
 using JetBrains.Annotations;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,7 +19,7 @@ namespace COSML
 
 
         private static readonly string[] OSFonts =
-        {
+        [
             // Windows
             "Consolas",
             // Mac
@@ -27,9 +27,9 @@ namespace COSML
             // Linux
             "Courier New",
             "DejaVu Mono"
-        };
+        ];
 
-        private new bool enabled = true;
+        private new bool enabled = false;
 
         private KeyCode toggleKey = KeyCode.F10;
         private int maxMessageCount = 25;
@@ -53,7 +53,7 @@ namespace COSML
             textPanelGo = new("ConsoleText");
             textPanelGo.transform.SetParent(overlayCanvasGo.transform, false);
             Text text = textPanelGo.AddComponent<Text>();
-            text.text = string.Join(string.Empty, messages.ToArray());
+            text.text = string.Join(string.Empty, [.. messages]);
             text.font = font;
             text.fontSize = fontSize;
             text.fontStyle = FontStyle.Normal;
@@ -62,13 +62,15 @@ namespace COSML
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             textPanelGo.GetComponent<RectTransform>().sizeDelta = new Vector2(800, 450);
+
+            overlayCanvasGo.SetActive(enabled);
         }
 
         private void LoadFont()
         {
-            font = Resources.FindObjectsOfTypeAll<Font>().Where(f => f != null && f.name == "Geomanist-Medium").First();
-            if (font == null) font = Font.CreateDynamicFontFromOSFont(OSFonts, fontSize);
-            if (font == null) font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+            font = MenuResources.GetFontByName("Geomanist-Medium");
+            font ??= Font.CreateDynamicFontFromOSFont(OSFonts, fontSize);
+            font ??= Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
         }
 
         private void LoadSettings()
@@ -117,7 +119,7 @@ namespace COSML
             if (!Input.GetKeyDown(toggleKey)) return;
 
             enabled = !enabled;
-            textPanelGo.SetActive(enabled);
+            overlayCanvasGo.SetActive(enabled);
         }
 
         public void AddText(string message, LogLevel level)
@@ -145,7 +147,7 @@ namespace COSML
 
             if (textPanelGo != null)
             {
-                textPanelGo.GetComponent<Text>().text = string.Join(string.Empty, messages.ToArray());
+                textPanelGo.GetComponent<Text>().text = string.Join(string.Empty, [.. messages]);
             }
         }
     }
