@@ -64,6 +64,8 @@ namespace COSML
                 Debug.Log($"Error while initializing ModLog.txt\n{ex}");
             }
 
+            ModHooks.LoadGlobalSettings();
+
             Logging.API.Info($"Mod loader: {Version}");
             Logging.API.Info("Starting mod loading");
 
@@ -82,8 +84,6 @@ namespace COSML
                 UnityEngine.Object.Destroy(coroutineHolder);
                 yield break;
             }
-
-            ModHooks.LoadGlobalSettings();
 
             Logging.API.Debug($"Loading assemblies and constructing mods");
 

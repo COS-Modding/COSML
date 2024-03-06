@@ -6,13 +6,10 @@ namespace FlappiBirdTweaks
 {
     public class FlappiBirdTweaks : Mod, ILocalSettings<LocalData>, IModTogglable, IModMenu
     {
-        private GlobalData globalData = new GlobalData();
-        private LocalData localData = new LocalData();
+        private LocalData localData = new();
 
         public FlappiBirdTweaks() : base("FlappiBird Tweaks") { }
         public override string GetVersion() => "1.0.0";
-        public void OnLoadGlobal(GlobalData data) => globalData = data;
-        public GlobalData OnSaveGlobal() => globalData;
         public void OnLoadLocal(LocalData data) => localData = data;
         public LocalData OnSaveLocal() => localData;
 

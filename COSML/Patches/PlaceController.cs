@@ -49,7 +49,6 @@ namespace COSML.Patches
 
         private void SaveLocalData(int saveSlot)
         {
-            Logging.API.Debug($"Saving local data {saveSlot}");
             try
             {
                 var path = ModdedSavePath(saveSlot);
@@ -66,6 +65,8 @@ namespace COSML.Patches
                 using FileStream fileStream = File.Create(path);
                 using var writer = new StreamWriter(fileStream);
                 writer.Write(modded);
+
+                Logging.API.Debug($"Saved Local Settigns of save {saveSlot}");
             }
             catch (Exception ex)
             {
@@ -75,7 +76,6 @@ namespace COSML.Patches
 
         private void LoadLocalData(int saveSlot)
         {
-            Logging.API.Debug($"Loading local data {saveSlot}");
             try
             {
                 var path = ModdedSavePath(saveSlot);
@@ -94,7 +94,7 @@ namespace COSML.Patches
                     );
                     if (moddedData == null)
                     {
-                        Logging.API.Error($"Loaded mod local data deserialized to null: {json}");
+                        Logging.API.Error($"Loaded mod local settings deserialized to null: {json}");
                         moddedData = new ModSavegameData();
                     }
                 }
@@ -102,6 +102,7 @@ namespace COSML.Patches
                 {
                     moddedData = new ModSavegameData();
                 }
+                Logging.API.Debug($"Loaded Local Settings of save {saveSlot}");
             }
             catch (Exception ex)
             {

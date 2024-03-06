@@ -185,9 +185,12 @@ namespace COSML.Modding
                 if (globalSettingsType is Type saveType)
                 {
                     if (!File.Exists(globalSettingsPath)) return;
-                    Info("Loading Global Settings");
 
-                    if (TryLoadGlobalSettings(globalSettingsPath, saveType)) return;
+                    if (TryLoadGlobalSettings(globalSettingsPath, saveType))
+                    {
+                        Info("Loaded Global Settings");
+                        return;
+                    }
 
                     Error($"Null global settings passed to {GetName()}");
 
@@ -244,7 +247,6 @@ namespace COSML.Modding
             {
                 if (globalSettingsType is Type saveType)
                 {
-                    Info("Saving Global Settings");
                     object settings = onSaveGlobalSettings(this);
                     if (settings is null) return;
 
@@ -261,6 +263,8 @@ namespace COSML.Modding
                             TypeNameHandling = TypeNameHandling.Auto
                         }
                     ));
+
+                    Info("Saved Global Settings");
                 }
             }
             catch (Exception ex)

@@ -37,7 +37,6 @@ namespace COSML.Modding
             try
             {
                 if (!File.Exists(SettingsPath)) return;
-                Logging.API.Info("Loading Global Settings");
 
                 using FileStream fileStream = File.OpenRead(SettingsPath);
                 using var reader = new StreamReader(fileStream);
@@ -56,6 +55,7 @@ namespace COSML.Modding
                     GlobalSettings = settings;
                     Logging.SetLogLevel(GlobalSettings.LoggingLevel);
                     Logging.SetIncludeTimestampt(GlobalSettings.IncludeTimestamps);
+                    Logging.API.Info("Loaded Global Settings");
                 }
             }
             catch (Exception ex)
@@ -68,8 +68,6 @@ namespace COSML.Modding
         {
             try
             {
-                Logging.API.Info("Saving Global Settings");
-
                 var settings = GlobalSettings;
                 if (settings is null) return;
 
@@ -97,6 +95,8 @@ namespace COSML.Modding
                         TypeNameHandling = TypeNameHandling.Auto
                     }
                 ));
+
+                Logging.API.Info("Saved Global Settings");
             }
             catch (Exception ex)
             {

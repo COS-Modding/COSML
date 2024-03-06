@@ -41,6 +41,6 @@ namespace COSML.Modding
 
     internal class ModSavegameData
     {
-        public Dictionary<string, JToken> modData = new();
+        public Dictionary<string, JToken> modData = [];
     }
 }
