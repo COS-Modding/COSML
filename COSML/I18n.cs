@@ -51,6 +51,8 @@ namespace COSML
             if (!Directory.Exists(i18nPath)) return;
 
             string[] filesPath = [.. new DirectoryInfo(i18nPath).GetFiles("*").Select(f => f.FullName).Where(IsValidI18nFile)];
+            if (filesPath.Length <= 0) return;
+
             foreach (string file in filesPath) LoadLangTranslations(file);
             ReloadTranslations();
 
