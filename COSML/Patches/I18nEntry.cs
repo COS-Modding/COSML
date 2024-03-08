@@ -22,7 +22,7 @@ namespace COSML.Patches
             if (I18n.CurrentLang == null) return orig_GetTranslation(type);
             if (I18n.Translations.ContainsKey(I18n.CurrentLang) && I18n.Translations[I18n.CurrentLang].ContainsKey(key))
             {
-                return TryFormat(I18n.Translations[I18n.CurrentLang][key]);
+                return TryFormat(I18n.Translations[I18n.CurrentLang][key]).ToUpper();
             }
             return orig_GetTranslation(type);
         }
