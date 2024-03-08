@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace COSML.Components.Toast
@@ -108,7 +109,15 @@ namespace COSML.Components.Toast
         public float duration;
         public ToastPosition position;
 
-        public override readonly string ToString() => text.ToString() + duration.ToString() + position.ToString();
+        public override readonly int GetHashCode() => HashCode.Combine(text, duration, position);
+        public override readonly bool Equals(object obj)
+        {
+            return obj is ToastData data &&
+                   text.Equals(data.text) &&
+                   duration == data.duration &&
+                   position == data.position;
+        }
+
     }
 
     public enum ToastPosition

@@ -251,7 +251,14 @@ namespace COSML
 
         public static implicit operator I18nKey(string value) => new(null) { label = value };
 
-        public override string ToString() => key ?? label;
+        public override int GetHashCode() => HashCode.Combine(key, label, args);
+        public override bool Equals(object obj)
+        {
+            return obj is I18nKey i18nKey &&
+                   key == i18nKey.key &&
+                   label == i18nKey.label &&
+                   string.Join(",", args).Equals(string.Join(",", i18nKey.args));
+        }
     }
 
     /// <summary>

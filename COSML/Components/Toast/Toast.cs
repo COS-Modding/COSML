@@ -25,7 +25,7 @@ namespace COSML.Components.Toast
                 duration = duration,
                 position = position
             };
-            if (queue.Find(d => d.ToString() == data.ToString()).text != null) return;
+            if (queue.Find(d => d.Equals(data)).text != null) return;
             queue.Add(data);
         }
     }
