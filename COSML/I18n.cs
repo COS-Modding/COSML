@@ -184,8 +184,8 @@ namespace COSML
         public static string Get(string type, I18nKey key)
         {
             if (type == null || key?.key == null || !Translations.ContainsKey(type)) return key?.label ?? "";
-            if (!Translations[type].ContainsKey(key.key)) return key.key ?? key.label ?? "";
-            return Translations[type][key.key] ?? key.label ?? "";
+            if (!Translations[type].ContainsKey(key.key)) return (key.key ?? key.label ?? "").ToUpper();
+            return TryFormat(type, key.key, key.args);
         }
 
         /// <summary>
@@ -227,6 +227,12 @@ namespace COSML
         {
             if (fontDefinition != null) return;
             fontDefinition = UnityEngine.Object.FindObjectOfType<I18nText>().fontDefinition;
+        }
+
+        internal static string TryFormat(string lang, string key, object[] args)
+        {
+            try { return string.Format(Translations[lang][key], args ?? []).ToUpper(); }
+            catch (Exception) { return string.Empty; }
         }
     }
 

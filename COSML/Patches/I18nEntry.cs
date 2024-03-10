@@ -1,5 +1,4 @@
 ﻿using MonoMod;
-using System;
 
 namespace COSML.Patches
 {
@@ -19,18 +18,10 @@ namespace COSML.Patches
         public extern string orig_GetTranslation(I18nType type);
         public new string GetTranslation(I18nType type)
         {
-            if (I18n.CurrentLang == null) return orig_GetTranslation(type);
-            if (I18n.Translations.ContainsKey(I18n.CurrentLang) && I18n.Translations[I18n.CurrentLang].ContainsKey(key))
-            {
-                return TryFormat(I18n.Translations[I18n.CurrentLang][key]).ToUpper();
-            }
+            string lang = I18n.CurrentLang;
+            if (lang == null) return orig_GetTranslation(type);
+            if (I18n.Translations.ContainsKey(lang) && I18n.Translations[lang].ContainsKey(key)) return I18n.TryFormat(lang, key, args);
             return orig_GetTranslation(type);
-        }
-
-        private string TryFormat(string str)
-        {
-            try { return string.Format(str, args ?? []); }
-            catch (Exception) { return string.Empty; }
         }
     }
 }
