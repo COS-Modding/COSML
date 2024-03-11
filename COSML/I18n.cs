@@ -197,18 +197,23 @@ namespace COSML
         /// <remarks>Also removes I18nText components.</remarks>
         public static I18nModdedText AddComponentI18nModdedText(GameObject go, I18nKey key)
         {
-            if (go == null || key == null || key.key == null || go.GetComponent<I18nModdedText>() != null) return null;
+            if (go == null || key == null || key.key == null) return null;
 
             TrySetFontDefinition();
 
-            I18nModdedText text = go.AddComponent<I18nModdedText>();
-            text.fontDefinition = fontDefinition;
-            text.asiaticSize = 52;
-            text.consoleAlt18n = [];
-            text.hasConsoleAltI18n = false;
+            I18nModdedText text = go.GetComponent<I18nModdedText>();
+            if (text == null)
+            {
+                text = go.AddComponent<I18nModdedText>();
+                text.fontDefinition = fontDefinition;
+                text.asiaticSize = 52;
+                text.consoleAlt18n = [];
+                text.hasConsoleAltI18n = false;
+                RemoveComponentI18nText(go);
+            }
+
             text.i18n = key;
             text.Init(CurrentI18nType, CurrentI18nPlateformType);
-            RemoveComponentI18nText(go);
 
             return text;
         }

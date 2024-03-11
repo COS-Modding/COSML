@@ -304,8 +304,7 @@ namespace COSML.MainMenu
             {
                 if (label.key != null)
                 {
-                    I18nModdedText i18nModText = I18n.AddComponentI18nModdedText(text.gameObject, label);
-                    i18nModText?.Translate();
+                    I18n.AddComponentI18nModdedText(text.gameObject, label);
                 }
                 else
                 {
