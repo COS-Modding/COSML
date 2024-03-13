@@ -81,7 +81,7 @@ namespace COSML
                 if (!DefaultI18nCodes.Contains(lang) && !Languages.Contains(lang)) Languages.Add(lang);
 
                 string key = split[0];
-                string value = split[1]?.ToUpper();
+                string value = split[1];
                 if (Translations[lang].ContainsKey(key)) Translations[lang][key] = value;
                 else Translations[lang].Add(key, value);
             }
@@ -156,7 +156,7 @@ namespace COSML
         /// <param name="value">Translation value.</param>
         public static void Set(string type, string key, string value)
         {
-            Translations[type][key] = value?.ToUpper();
+            Translations[type][key] = value;
             ReloadTranslations();
         }
 
@@ -184,7 +184,7 @@ namespace COSML
         public static string Get(string type, I18nKey key)
         {
             if (type == null || key?.key == null || !Translations.ContainsKey(type)) return key?.label ?? "";
-            if (!Translations[type].ContainsKey(key.key)) return (key.key ?? key.label ?? "").ToUpper();
+            if (!Translations[type].ContainsKey(key.key)) return key.key ?? key.label ?? "";
             return TryFormat(type, key.key, key.args);
         }
 
@@ -193,9 +193,10 @@ namespace COSML
         /// </summary>
         /// <param name="go">GameObject to add the component to.</param>
         /// <param name="key">I18nKey to set.</param>
+        /// <param name="forceUpper">Whether to force uppercase.</param>
         /// <returns></returns>
         /// <remarks>Also removes I18nText components.</remarks>
-        public static I18nModdedText AddComponentI18nModdedText(GameObject go, I18nKey key)
+        public static I18nModdedText AddComponentI18nModdedText(GameObject go, I18nKey key, bool forceUpper = false)
         {
             if (go == null || key == null || key.key == null) return null;
 
@@ -212,6 +213,7 @@ namespace COSML
                 RemoveComponentI18nText(go);
             }
 
+            text.forceUpper = forceUpper;
             text.i18n = key;
             text.Init(CurrentI18nType, CurrentI18nPlateformType);
 
@@ -230,13 +232,12 @@ namespace COSML
 
         private static void TrySetFontDefinition()
         {
-            if (fontDefinition != null) return;
-            fontDefinition = UnityEngine.Object.FindObjectOfType<I18nText>().fontDefinition;
+            fontDefinition ??= UnityEngine.Object.FindObjectOfType<I18nText>()?.fontDefinition;
         }
 
         internal static string TryFormat(string lang, string key, object[] args)
         {
-            try { return string.Format(Translations[lang][key], args ?? []).ToUpper(); }
+            try { return string.Format(Translations[lang][key], args ?? []); }
             catch (Exception) { return string.Empty; }
         }
     }

@@ -31,7 +31,7 @@ namespace COSML.Components.Toast
         {
             ToastData data = Toast.queue[0];
             text.text = data.text.label?.ToUpper();
-            I18n.AddComponentI18nModdedText(text.gameObject, data.text);
+            I18n.AddComponentI18nModdedText(text.gameObject, data.text, true);
             animator.durationTime = data.duration;
             SetPosition(data.position);
 

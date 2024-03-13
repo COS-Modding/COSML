@@ -203,7 +203,7 @@ namespace COSML.MainMenu
             GameObject labelGo = buttonGo.transform.Find("Text").gameObject;
             Text labelText = labelGo.GetComponent<Text>();
             labelText.text = data.label.label?.ToUpper() ?? "MODS";
-            I18n.AddComponentI18nModdedText(labelText.gameObject, data.label);
+            I18n.AddComponentI18nModdedText(labelText.gameObject, data.label, true);
 
             return buttonMenu;
         }
@@ -215,7 +215,7 @@ namespace COSML.MainMenu
             menuGo.name = data.name ?? $"Menu_{data.label.label.Replace(" ", "_")}";
             Text titleText = menuGo.transform.Find("Text_Titre").GetComponent<Text>();
             titleText.text = data.label.label?.ToUpper() ?? "MENU";
-            I18n.AddComponentI18nModdedText(titleText.gameObject, data.label);
+            I18n.AddComponentI18nModdedText(titleText.gameObject, data.label, true);
 
             Destroy(menuGo.GetComponent<global::OptionsMainMenu>());
             T menu = menuGo.AddComponent<T>();
@@ -304,7 +304,7 @@ namespace COSML.MainMenu
             {
                 if (label.key != null)
                 {
-                    I18n.AddComponentI18nModdedText(text.gameObject, label);
+                    I18n.AddComponentI18nModdedText(text.gameObject, label, true);
                 }
                 else
                 {
