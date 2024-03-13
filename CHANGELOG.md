@@ -1,6 +1,15 @@
 Changelog
 =========================
 
+## v1.0.2
+- Fixed SetLabel not applying new i18n key/args
+- Use I18nText forceUpper instead of forcing ToUpper on every text
+- Format i18n args for static method I18n.Get
+
+## v1.0.1
+- Fixed Toast duplicate detection
+- A few refactoring
+
 ## v1.0.0
 - Menu rework : hide option, change label/value dynamically.
 - I18n : change in-game translations or add new languages
