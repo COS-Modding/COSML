@@ -50,8 +50,9 @@ namespace COSML.MainMenu
             int optionIndex = 0;
             foreach (MenuOption modOption in options)
             {
+                modOption.ResetEvents();
                 MonoBehaviour option;
-                if (modOption is MenuUtils.MenuButton buttonData)
+                if (modOption is MenuButton buttonData)
                 {
                     option = CreateButton(new ButtonData
                     {
@@ -63,7 +64,7 @@ namespace COSML.MainMenu
                         visible = buttonData.Visible
                     });
                 }
-                else if (modOption is MenuUtils.MenuText textData)
+                else if (modOption is MenuText textData)
                 {
                     option = CreateText(new TextData
                     {
@@ -100,7 +101,7 @@ namespace COSML.MainMenu
                         visible = toggleData.Visible
                     });
                 }
-                else if (modOption is MenuUtils.MenuSlider sliderData)
+                else if (modOption is MenuSlider sliderData)
                 {
                     option = CreateSlider(new SliderData
                     {
@@ -158,7 +159,7 @@ namespace COSML.MainMenu
                             value = toggleData.Value
                         });
                     }
-                    else if (data is MenuUtils.MenuSlider sliderData)
+                    else if (data is MenuSlider sliderData)
                     {
                         UpdateSlider((Patches.MainMenuSlider)option, new SliderData
                         {
@@ -250,10 +251,10 @@ namespace COSML.MainMenu
 
                 if (modOption is Patches.MainMenuButton)
                 {
-                    MenuUtils.MenuButton buttonData = (MenuUtils.MenuButton)optionData;
+                    MenuButton buttonData = (MenuButton)optionData;
                     instance.PlayGlobalSound("Play_menu_clic", false);
                     buttonData.OnClick?.Invoke();
-                    MenuUtils.MenuMain menu = buttonData.Menu;
+                    MenuMain menu = buttonData.Menu;
                     if (menu != null)
                     {
                         if (menus.ContainsKey(buttonId)) DestroyImmediate(menus[buttonId].gameObject);
@@ -284,7 +285,7 @@ namespace COSML.MainMenu
                 {
                     if (modSlider.HasUpdated())
                     {
-                        MenuUtils.MenuSlider sliderData = (MenuUtils.MenuSlider)optionData;
+                        MenuSlider sliderData = (MenuSlider)optionData;
                         sliderData.OnChange?.Invoke(modSlider.GetCurrentValue());
                     }
                 }
