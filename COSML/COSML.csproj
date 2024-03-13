@@ -6,7 +6,7 @@
         <AssemblyTitle>Chants Of Sennaar Mod Loader</AssemblyTitle>
         <Product>COSML</Product>
         <Copyright>Copyright © 2024</Copyright>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <RestorePackagesPath>packages</RestorePackagesPath>
 		<NoWarn>CS1591;CS0626</NoWarn>
