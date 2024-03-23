@@ -97,5 +97,16 @@ namespace COSML
                 if (condition(child.gameObject)) UnityEngine.Object.Destroy(child.gameObject);
             }
         }
+
+        /// <summary>
+        /// Get the full path of a GameObject/Component
+        /// </summary>
+        /// <param name="current"></param>
+        /// <returns></returns>
+        public static string GetPath(this Transform current)
+        {
+            if (current.parent == null) return current.name;
+            return current.parent.GetPath() + "/" + current.name;
+        }
     }
 }
