@@ -1,6 +1,12 @@
 Changelog
 =========================
 
+## v1.0.3
+- Added UnityUtils method GetPath
+- No longer forces Toast text uppercase
+- Fixed MenuId values
+- Fixed menu options actions not resetting when rebuilt
+
 ## v1.0.2
 - Fixed SetLabel not applying new i18n key/args
 - Use I18nText forceUpper instead of forcing ToUpper on every text
