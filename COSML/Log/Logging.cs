@@ -62,7 +62,7 @@ namespace COSML.Log
         {
             if (_logLevel > level) return;
 
-            string timeText = "[" + DateTime.Now.ToUniversalTime().ToString("HH:mm:ss") + "]:"; // uses ISO 8601
+            string timeText = "[" + DateTime.Now.ToLocalTime().ToString("HH:mm:ss") + "]:";
             string levelText = $"[{level.ToString().ToUpper()}]:";
             string prefixText = _includeTimestamps ? timeText + levelText : levelText;
 
