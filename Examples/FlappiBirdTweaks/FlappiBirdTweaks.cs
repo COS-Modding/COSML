@@ -10,7 +10,6 @@ namespace FlappiBirdTweaks
 
         public FlappiBirdTweaks() : base("FlappiBird Tweaks") { }
         public override string GetVersion() => "1.0.0";
-        public void OnLoadLocal(LocalData data) => localData = data;
         public LocalData OnSaveLocal() => localData;
 
         // Instance of the puzzle to edit values
@@ -26,6 +25,10 @@ namespace FlappiBirdTweaks
         private object[] speedSteps = ["x¼", "x½", "x¾", "x1", "x2", "x4", "x8"];
 
         private bool loaded;
+
+        // Menu options
+        private MenuSlider upSpeedSlider;
+        private MenuSlider downSpeedSlider;
 
         public override void Init()
         {
@@ -89,20 +92,33 @@ namespace FlappiBirdTweaks
             }
         }
 
+        public void OnLoadLocal(LocalData data)
+        {
+            localData = data;
+
+            upSpeedSlider?.SetValue(localData.upSpeed);
+            downSpeedSlider?.SetValue(localData.downSpeed);
+        }
+
         // Mod menu to easily edit values
-        public IList<MenuOption> GetMenu() => new List<MenuOption> {
-            new MenuSlider(
+        public IList<MenuOption> GetMenu()
+        {
+            upSpeedSlider = new MenuSlider(
                 "Up speed",
                 speedSteps,
                 localData.upSpeed,
                 (newIndex) => UpdateSpeed(true, newIndex)
-            ),
-            new MenuSlider(
+            );
+
+            downSpeedSlider = new MenuSlider(
                 "Down speed",
                 speedSteps,
                 localData.downSpeed,
                 (newIndex) => UpdateSpeed(false, newIndex)
-            )
-        };
+            );
+
+            return [upSpeedSlider, downSpeedSlider];
+        }
+
     }
 }

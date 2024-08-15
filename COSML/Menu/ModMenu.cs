@@ -140,12 +140,11 @@ namespace COSML.MainMenu
 
                 modOption.UpdateHook += (data) =>
                 {
-                    UpdateOption(option, data.Label);
-
                     if (data is MenuSelect selectData)
                     {
                         UpdateSelect((Patches.MainMenuSelector)option, new SelectData
                         {
+                            label = data.Label,
                             values = selectData.Values,
                             value = selectData.Value
                         });
@@ -154,6 +153,7 @@ namespace COSML.MainMenu
                     {
                         UpdateToggle((Patches.MainMenuSelector)option, new ToggleData
                         {
+                            label = data.Label,
                             on = toggleData.On,
                             off = toggleData.Off,
                             value = toggleData.Value
@@ -163,6 +163,7 @@ namespace COSML.MainMenu
                     {
                         UpdateSlider((Patches.MainMenuSlider)option, new SliderData
                         {
+                            label = data.Label,
                             steps = sliderData.Steps,
                             value = sliderData.Value
                         });
@@ -171,6 +172,7 @@ namespace COSML.MainMenu
                     {
                         UpdateInputText((MainMenuInputText)option, new InputTextData
                         {
+                            label = data.Label,
                             text = inputTextData.Text,
                             max = inputTextData.Max,
                         });
