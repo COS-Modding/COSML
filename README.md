@@ -34,7 +34,7 @@ Build
 **If you want to use the API, for making mods or using them, please use a release or the installer.**
 
 1. Clone the repository.
-2. Copy the Managed folder from your Hollow Knight installation into the solution folder and name it `Vanilla`.
+2. Copy the Managed folder from your Chants Of Sennaar installation into the solution folder and name it `Vanilla`.
 3. Build the solution using an IDE or `dotnet build`.
 4. The result will be in `OutputFinal`.
 
